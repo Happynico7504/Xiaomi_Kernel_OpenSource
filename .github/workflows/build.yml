@@ -29,8 +29,8 @@ jobs:
         prerelease: true
         title: "Automatic build ${{ env.SHORT_SHA }}"
         files: |
-          buildcache/arch/arm/boot/Image
-          buildcache/arch/arm/boot/zImage
+          buildcache/arch/arm64/boot/Image
+          buildcache/arch/arm64/boot/Image.gz
           buildcache/arch/arm/boot/dts/redmi-a1.dtb
           buildcache/.config
           clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz
