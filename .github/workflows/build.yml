@@ -38,7 +38,7 @@ jobs:
         files: |
           buildcache/arch/arm64/boot/Image
           buildcache/arch/arm64/boot/Image.gz
-          buildcache/kheaders_data.tar.xz
+          buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
           buildcache/.config
           clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz
