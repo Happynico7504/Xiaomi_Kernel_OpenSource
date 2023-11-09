@@ -17,7 +17,7 @@ jobs:
         sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
         sudo unzip ice-s-oss.zip || true
         sudo cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
-        sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz > /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip xzcat > /dev/null
+        sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz > /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip > /dev/null
         sudo ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
         nproc
