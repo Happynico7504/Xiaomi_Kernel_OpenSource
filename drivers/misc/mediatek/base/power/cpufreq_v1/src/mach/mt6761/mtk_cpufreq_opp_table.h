@@ -21,9 +21,9 @@
 #define CPU_DVFS_FREQ10_LL_FY   1200000    /* KHz */
 #define CPU_DVFS_FREQ11_LL_FY   1100000    /* KHz */
 #define CPU_DVFS_FREQ12_LL_FY   1000000    /* KHz */
-#define CPU_DVFS_FREQ13_LL_FY    900000    /* KHz */
+#define CPU_DVFS_FREQ13_LL_FY    300000    /* KHz */
 #define CPU_DVFS_FREQ14_LL_FY    600000     /* KHz */
-#define CPU_DVFS_FREQ15_LL_FY    300000     /* KHz */
+#define CPU_DVFS_FREQ15_LL_FY    900000     /* KHz */
 
 #define CPU_DVFS_VOLT0_VPROC_LL_FY    120000           /* 10uV */
 #define CPU_DVFS_VOLT1_VPROC_LL_FY    110000           /* 10uV */
@@ -58,8 +58,8 @@
 #define CPU_DVFS_FREQ11_LL_SB   1200000    /* KHz */
 #define CPU_DVFS_FREQ12_LL_SB   1100000    /* KHz */
 #define CPU_DVFS_FREQ13_LL_SB   1000000    /* KHz */
-#define CPU_DVFS_FREQ14_LL_SB    900000    /* KHz */
-#define CPU_DVFS_FREQ15_LL_SB    300000     /* KHz */
+#define CPU_DVFS_FREQ14_LL_SB    300000    /* KHz */
+#define CPU_DVFS_FREQ15_LL_SB    900000     /* KHz */
 
 #define CPU_DVFS_VOLT0_VPROC_LL_SB    120000            /* 10uV */
 #define CPU_DVFS_VOLT1_VPROC_LL_SB     99375            /* 10uV */
@@ -93,9 +93,9 @@
 #define CPU_DVFS_FREQ10_LL_FY2   1200000    /* KHz */
 #define CPU_DVFS_FREQ11_LL_FY2   1100000    /* KHz */
 #define CPU_DVFS_FREQ12_LL_FY2   1000000    /* KHz */
-#define CPU_DVFS_FREQ13_LL_FY2    900000    /* KHz */
+#define CPU_DVFS_FREQ13_LL_FY2    300000    /* KHz */
 #define CPU_DVFS_FREQ14_LL_FY2    600000     /* KHz */
-#define CPU_DVFS_FREQ15_LL_FY2    300000     /* KHz */
+#define CPU_DVFS_FREQ15_LL_FY2    900000     /* KHz */
 
 #define CPU_DVFS_VOLT0_VPROC_LL_FY2    120000           /* 10uV */
 #define CPU_DVFS_VOLT1_VPROC_LL_FY2    110000           /* 10uV */
@@ -129,9 +129,9 @@
 #define CPU_DVFS_FREQ10_LL_LITE   1200000    /* KHz */
 #define CPU_DVFS_FREQ11_LL_LITE   1100000    /* KHz */
 #define CPU_DVFS_FREQ12_LL_LITE   1000000    /* KHz */
-#define CPU_DVFS_FREQ13_LL_LITE    900000    /* KHz */
+#define CPU_DVFS_FREQ13_LL_LITE    300000    /* KHz */
 #define CPU_DVFS_FREQ14_LL_LITE    600000     /* KHz */
-#define CPU_DVFS_FREQ15_LL_LITE    300000     /* KHz */
+#define CPU_DVFS_FREQ15_LL_LITE    900000     /* KHz */
 
 #define CPU_DVFS_VOLT0_VPROC_LL_LITE     120000          /* 10uV */
 #define CPU_DVFS_VOLT1_VPROC_LL_LITE     110000          /* 10uV */
