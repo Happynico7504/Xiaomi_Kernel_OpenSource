@@ -22,10 +22,7 @@ jobs:
         sleep 15
         nproc
         sleep 15
-    - run: "echo Building Kernel..."
     - run: "sudo PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH KBUILD_OUTPUT=buildcache COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j$(nproc) || true"
-    - run: "echo Building Modules..."
-    - run: "sudo PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH KBUILD_OUTPUT=buildcache COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make modules -j$(nproc) || true"
     - run: "sudo cp $(sudo find -iname *.ko) modules || true"
     - run: "sudo tar -c modules | gzip -9 > modules.tar.gz"
     - run: "sudo tar -c buildcache | gzip -9 > buildcache.tar.gz"
@@ -39,11 +36,9 @@ jobs:
         prerelease: true
         title: "Automatic build ${{ env.SHORT_SHA }}"
         files: |
-          buildcache/arch/arm64/boot/Image
           buildcache/arch/arm64/boot/Image.gz
           buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
-          buildcache/.config
           clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz
           buildcache.tar.gz
           buildcache.tar.gz.sha512
