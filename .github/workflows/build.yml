@@ -1,9 +1,5 @@
-name: "build"
+name: "Release Pipeline"
 on:
-  push:
-      branches:
-              - ice-s-oss
-
   workflow_dispatch:
 
 jobs:
