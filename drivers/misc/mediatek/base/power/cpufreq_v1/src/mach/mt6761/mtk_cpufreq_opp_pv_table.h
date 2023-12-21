@@ -23,9 +23,9 @@ static unsigned int fyTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 	{ 1200, 37, 2, 1 },
 	{ 1100, 33, 2, 1 },
 	{ 1000, 30, 2, 1 },
+	{  500, 25, 2, 1 },
 	{  300, 25, 2, 1 },
 	{  100, 25, 2, 1 },
-	{  0, 25, 2, 1 },
 };
 
 static unsigned int sbTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
@@ -45,7 +45,7 @@ static unsigned int sbTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 	{ 1100, 33, 2, 1 },
 	{ 1000, 29, 2, 1 },
 	{ 300, 25, 2, 1 },
-	{ 0, 25, 2, 1 },
+	{ 100, 25, 2, 1 },
 };
 
 static unsigned int fy2Tbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
@@ -63,9 +63,9 @@ static unsigned int fy2Tbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 	{ 1200, 45, 2, 1 },
 	{ 1100, 45, 2, 1 },
 	{ 1000, 45, 2, 1 },
+	{  500, 40, 2, 1 },
 	{  300, 40, 2, 1 },
 	{  100, 40, 2, 1 },
-	{  0, 40, 2, 1 },
 };
 
 static unsigned int LiteTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
@@ -83,9 +83,9 @@ static unsigned int LiteTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 	{ 1200, 37, 2, 1 },
 	{ 1100, 33, 2, 1 },
 	{ 1000, 30, 2, 1 },
+	{  500, 25, 2, 1 },
 	{  300, 25, 2, 1 },
 	{  100, 25, 2, 1 },
-	{  0, 25, 2, 1 },
 };
 
 unsigned int *xrecordTbl[NUM_CPU_LEVEL] = {	/* v0.3 */
