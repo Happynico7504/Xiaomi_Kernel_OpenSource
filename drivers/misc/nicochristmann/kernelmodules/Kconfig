@@ -1,9 +1,5 @@
-menu "mediatek kernel modules"
-
 config NICOCHRISTMANN_MTKMODS
 
 tristate "Mediatek Kernel Modules"
 
 default m
-
-endmenu
