@@ -4,7 +4,7 @@ on:
 
 jobs:
   build:
-    runs-on: "selfhosted-debian-vm"
+    runs-on: "local-pc"
     steps:
     
     - uses: "actions/checkout@v2"
