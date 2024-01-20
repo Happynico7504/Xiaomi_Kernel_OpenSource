@@ -85,13 +85,13 @@ extern int tps65132_write_bytes(unsigned char addr, unsigned char value);
 /* static unsigned char lcd_id_pins_value = 0xFF; */
 static const unsigned char LCD_MODULE_ID = 0x01;
 #define LCM_DSI_CMD_MODE                                    0
-#define FRAME_WIDTH                                     (720)
-#define FRAME_HEIGHT                                    (1600)
+#define FRAME_WIDTH                                     (1080)
+#define FRAME_HEIGHT                                    (2400)
 
 /* physical size in um */
 #define LCM_PHYSICAL_WIDTH (67932)
 #define LCM_PHYSICAL_HEIGHT (150960)
-#define LCM_DENSITY	(320)
+#define LCM_DENSITY	(480)
 
 
 #define GPIO_LCD_BIAS_ENP_PIN 168
