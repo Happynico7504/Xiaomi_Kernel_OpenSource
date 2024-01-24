@@ -106,6 +106,7 @@ static int pvr_pm_resume(struct device *dev)
 const struct dev_pm_ops pvr_pm_ops = {
 	.suspend = pvr_pm_suspend,
 	.resume = pvr_pm_resume,
+	.poweroff = pvr_pm_suspend
 };
 
 
