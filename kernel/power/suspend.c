@@ -41,7 +41,7 @@
 const char * const pm_labels[] = {
 	[PM_SUSPEND_TO_IDLE] = "freeze",
 	[PM_SUSPEND_STANDBY] = "standby",
-	[PM_SUSPEND_MEM] = "mem",
+	[PM_SUSPEND_MEM] = "memreal",
 };
 const char *pm_states[PM_SUSPEND_MAX];
 static const char * const mem_sleep_labels[] = {
