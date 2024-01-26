@@ -172,7 +172,6 @@ unsigned long kallsyms_lookup_name(const char *name)
 			return kallsyms_sym_address(i);
 	}
 	return module_kallsyms_lookup_name(name);
-	EXPORT_SYMBOL("kallsyms_lookup_name");
 }
 
 int kallsyms_on_each_symbol(int (*fn)(void *, const char *, struct module *,
@@ -191,7 +190,6 @@ int kallsyms_on_each_symbol(int (*fn)(void *, const char *, struct module *,
 			return ret;
 	}
 	return module_kallsyms_on_each_symbol(fn, data);
-	EXPORT_SYMBOL("kallsyms_on_each_symbol");
 }
 
 static unsigned long get_symbol_pos(unsigned long addr,
@@ -760,3 +758,6 @@ static int __init kallsyms_init(void)
 	return 0;
 }
 device_initcall(kallsyms_init);
+
+EXPORT_SYMBOL("kallsyms_on_each_symbol");
+EXPORT_SYMBOL("kallsyms_lookup_name");
