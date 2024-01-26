@@ -91,7 +91,7 @@ static const unsigned char LCD_MODULE_ID = 0x01;
 /* physical size in um */
 #define LCM_PHYSICAL_WIDTH (67932)
 #define LCM_PHYSICAL_HEIGHT (150960)
-#define LCM_DENSITY	(320)
+#define LCM_DENSITY	(480)
 
 
 #define GPIO_LCD_BIAS_ENP_PIN 168
