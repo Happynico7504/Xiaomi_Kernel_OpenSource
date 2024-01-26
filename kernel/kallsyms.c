@@ -759,5 +759,5 @@ static int __init kallsyms_init(void)
 }
 device_initcall(kallsyms_init);
 
-EXPORT_SYMBOL("kallsyms_on_each_symbol")
-EXPORT_SYMBOL("kallsyms_lookup_name")
+EXPORT_SYMBOL(kallsyms_on_each_symbol);
+EXPORT_SYMBOL(kallsyms_lookup_name);
