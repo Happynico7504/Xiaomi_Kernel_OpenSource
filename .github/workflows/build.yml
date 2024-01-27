@@ -15,7 +15,8 @@ jobs:
         sudo cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
         sudo wget https://github.com/morrownr/88x2bu-20210702/archive/refs/heads/main.zip || true
         sudo unzip main.zip || true
-        sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi || true
+        sudo mkdir drivers/misc/nicochristmann/usbwifi/src || true
+        sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
         sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz > /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip > /dev/null
         sudo ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
