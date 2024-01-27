@@ -13,6 +13,7 @@ jobs:
         wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
         unzip ice-s-oss.zip || true
         cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
+        git clone https://github.com/morrownr/88x2bu-20210702.git drivers/misc/nicochristmann/usbwifi
         xzcat /home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | tar -x
         ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
@@ -35,7 +36,6 @@ jobs:
           buildcache/arch/arm64/boot/Image.gz
           buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
-          /home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz
           buildcache.tar.gz
           buildcache.tar.gz.sha512
           modules.tar.gz
