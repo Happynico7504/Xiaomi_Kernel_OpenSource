@@ -13,7 +13,7 @@ jobs:
         sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
         sudo unzip ice-s-oss.zip || true
         sudo cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
-        sudo wget https://github.com/morrownr/Happynico7504/archive/refs/heads/main.zip || true
+        sudo wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip || true
         sudo unzip main.zip || true
         sudo mkdir drivers/misc/nicochristmann/usbwifi/src || true
         sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
