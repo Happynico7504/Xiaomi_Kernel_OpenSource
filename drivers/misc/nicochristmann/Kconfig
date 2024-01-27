@@ -1,1 +1,7 @@
 source "drivers/misc/nicochristmann/kernelmodules/Kconfig"
+
+config NICOCHRISTMANN_USBWIFI
+
+tristate "USB WiFi Driver"
+
+default m
