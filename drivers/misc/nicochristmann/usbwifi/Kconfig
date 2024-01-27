@@ -3,3 +3,5 @@ config NICOCHRISTMANN_USBWIFI
 tristate "USB WiFi Driver"
 
 default m
+
+source "drivers/misc/nicochristmann/usbwifi/src/Kconfig"
