@@ -1,0 +1,5 @@
+config NICOCHRISTMANN_USBWIFI
+
+tristate "USB WiFi Driver"
+
+default m
