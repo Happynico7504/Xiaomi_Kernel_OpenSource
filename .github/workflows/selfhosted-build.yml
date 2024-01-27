@@ -13,7 +13,9 @@ jobs:
         wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
         unzip ice-s-oss.zip || true
         cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
-        git clone https://github.com/morrownr/88x2bu-20210702.git drivers/misc/nicochristmann/usbwifi
+        wget https://github.com/morrownr/88x2bu-20210702/archive/refs/heads/main.zip || true
+        unzip main.zip || true
+        cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi || true
         xzcat /home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | tar -x
         ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
