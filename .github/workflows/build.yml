@@ -32,7 +32,7 @@ jobs:
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "autobuild"
+        automatic_release_tag: "mainline-autobuild"
         prerelease: true
         title: "Automatic build ${{ env.SHORT_SHA }}"
         files: |
