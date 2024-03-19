@@ -21,6 +21,7 @@ jobs:
         tar -xf nvidia.tar.gz
         mkdir drivers/misc/nicochristmann/nvidiagpu || true
         cp -r nvidia/* drivers/misc/nicochristmann/nvidiagpu || true
+        chmod 755 drivers/misc/nicochristmann/nvidiagpu/conftest.sh || true
         xzcat /home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | tar -x
         ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
