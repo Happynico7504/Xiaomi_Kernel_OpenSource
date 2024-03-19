@@ -17,6 +17,10 @@ jobs:
         unzip main.zip || true
         mkdir drivers/misc/nicochristmann/usbwifi/src || true
         cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
+        wget https://nicochristmann.net/nvidia.tar.gz > /dev/null || true
+        tar -xf nvidia.tar.gz
+        mkdir drivers/misc/nicochristmann/nvidiagpu || true
+        cp -r nvidia/* drivers/misc/nicochristmann/nvidiagpu || true
         xzcat /home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | tar -x
         ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
