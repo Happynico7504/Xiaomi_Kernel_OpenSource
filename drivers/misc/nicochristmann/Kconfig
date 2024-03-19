@@ -1,2 +1,8 @@
 source "drivers/misc/nicochristmann/kernelmodules/Kconfig"
 source "drivers/misc/nicochristmann/usbwifi/Kconfig"
+
+config NICOCHRISTMANN_NVIDIAGPU
+
+tristate "Nvidia GPU Kernel Modules"
+
+default m
