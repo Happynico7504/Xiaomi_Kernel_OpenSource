@@ -17,6 +17,10 @@ jobs:
         sudo unzip main.zip || true
         sudo mkdir drivers/misc/nicochristmann/usbwifi/src || true
         sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
+        sudo wget https://nicochristmann.net/nvidia.tar.gz > /dev/null || true
+        sudo tar -xf nvidia.tar.gz
+        sudo mkdir drivers/misc/nicochristmann/nvidiagpu || true
+        sudo cp -r nvidia/* drivers/misc/nicochristmann/nvidiagpu || true
         sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz > /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip > /dev/null
         sudo ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
