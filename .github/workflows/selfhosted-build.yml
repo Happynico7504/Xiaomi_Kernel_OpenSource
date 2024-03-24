@@ -18,7 +18,7 @@ jobs:
         mkdir drivers/misc/nicochristmann/usbwifi/src || true
         cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
         wget https://nicochristmann.net/nvidia.tar.gz > /dev/null || true
-        tar -xf nvidia.tar.gz
+        tar -xf nvidia.tar.gz || true
         mkdir drivers/misc/nicochristmann/nvidiagpu || true
         cp -r nvidia/* drivers/misc/nicochristmann/nvidiagpu || true
         chmod 755 drivers/misc/nicochristmann/nvidiagpu/conftest.sh || true
