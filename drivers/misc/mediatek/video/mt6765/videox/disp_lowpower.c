@@ -981,8 +981,8 @@ void _cmd_mode_leave_idle(void)
 #endif
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	unsigned long long bandwidth;
-	unsigned int in_fps = 250;
-	unsigned int out_fps = 250;
+	unsigned int in_fps = 120;
+	unsigned int out_fps = 120;
 	int stable = 0;
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	enum DDP_SCENARIO_ENUM scen =
