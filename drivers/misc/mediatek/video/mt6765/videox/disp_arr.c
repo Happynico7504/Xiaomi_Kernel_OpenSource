@@ -87,8 +87,8 @@ int primary_display_set_refresh_rate(unsigned int refresh_rate)
 	int temp_refresh_rate_min = 0;
 	int temp_refresh_rate_max = 0;
 
-	temp_refresh_rate_min = 1; /* unused -> primary_display_get_min_refresh_rate(); */
-	temp_refresh_rate_max = 1000; /* unused -> primary_display_get_max_refresh_rate(); */
+	temp_refresh_rate_min = primary_display_get_min_refresh_rate(); /* unused -> primary_display_get_min_refresh_rate(); */
+	temp_refresh_rate_max = primary_display_get_max_refresh_rate(); /* unused -> primary_display_get_max_refresh_rate(); */
 
 	if ((refresh_rate > temp_refresh_rate_max) ||
 		(refresh_rate < temp_refresh_rate_min))
