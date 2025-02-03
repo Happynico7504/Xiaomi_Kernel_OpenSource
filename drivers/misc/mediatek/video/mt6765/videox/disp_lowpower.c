@@ -776,13 +776,13 @@ void _vdo_mode_enter_idle(void)
 	struct LCM_PARAMS *params;
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	unsigned long long bandwidth;
-	unsigned int out_fps = 250;
+	unsigned int out_fps = 120;
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	unsigned int in_fps = 0;
 #endif
 #endif
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	uint cur_disp_fps = 250;
+	uint cur_disp_fps = 120;
 #endif
 
 	DISPINFO("[disp_lowpower]%s\n", __func__);
