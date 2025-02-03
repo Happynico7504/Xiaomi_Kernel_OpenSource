@@ -152,7 +152,7 @@ static struct golden_setting_context *_get_golden_setting_context(void)
 	if (!is_inited) {
 		/* default setting */
 		g_golden_setting_context.is_one_layer = 0;
-		g_golden_setting_context.fps = 250;
+		g_golden_setting_context.fps = 120;
 		g_golden_setting_context.is_dc = 0;
 		g_golden_setting_context.is_display_idle = 0;
 		g_golden_setting_context.is_wrot_sram = 0;
