@@ -828,7 +828,7 @@ void _vdo_mode_enter_idle(void)
 				primary_display_dsi_vfp_change(1);
 				idlemgr_pgc->cur_lp_cust_mode = 1;
 				break;
-			case PERFORMANC_MODE: /* 250 */
+			case PERFORMANC_MODE: /* 120 */
 				primary_display_dsi_vfp_change(0);
 				idlemgr_pgc->cur_lp_cust_mode = 0;
 				break;
