@@ -152,7 +152,7 @@ static struct golden_setting_context *_get_golden_setting_context(void)
 	if (!is_inited) {
 		/* default setting */
 		g_golden_setting_context.is_one_layer = 0;
-		g_golden_setting_context.fps = 120;
+		g_golden_setting_context.fps = 60;
 		g_golden_setting_context.is_dc = 0;
 		g_golden_setting_context.is_display_idle = 0;
 		g_golden_setting_context.is_wrot_sram = 0;
@@ -776,13 +776,13 @@ void _vdo_mode_enter_idle(void)
 	struct LCM_PARAMS *params;
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	unsigned long long bandwidth;
-	unsigned int out_fps = 120;
+	unsigned int out_fps = 60;
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	unsigned int in_fps = 0;
 #endif
 #endif
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	uint cur_disp_fps = 120;
+	uint cur_disp_fps = 60;
 #endif
 
 	DISPINFO("[disp_lowpower]%s\n", __func__);
@@ -828,7 +828,7 @@ void _vdo_mode_enter_idle(void)
 				primary_display_dsi_vfp_change(1);
 				idlemgr_pgc->cur_lp_cust_mode = 1;
 				break;
-			case PERFORMANC_MODE: /* 120 */
+			case PERFORMANC_MODE: /* 60 */
 				primary_display_dsi_vfp_change(0);
 				idlemgr_pgc->cur_lp_cust_mode = 0;
 				break;
@@ -869,11 +869,11 @@ void _vdo_mode_leave_idle(void)
 {
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	unsigned long long bandwidth;
-	unsigned int in_fps = 120;
-	unsigned int out_fps = 120;
+	unsigned int in_fps = 60;
+	unsigned int out_fps = 60;
 #endif
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
-	unsigned int cur_disp_fps = 120;
+	unsigned int cur_disp_fps = 60;
 #endif
 
 	DISPMSG("[disp_lowpower]%s\n", __func__);
@@ -981,8 +981,8 @@ void _cmd_mode_leave_idle(void)
 #endif
 #ifdef MTK_FB_MMDVFS_SUPPORT
 	unsigned long long bandwidth;
-	unsigned int in_fps = 120;
-	unsigned int out_fps = 120;
+	unsigned int in_fps = 60;
+	unsigned int out_fps = 60;
 	int stable = 0;
 #ifdef CONFIG_MTK_HIGH_FRAME_RATE
 	enum DDP_SCENARIO_ENUM scen =
