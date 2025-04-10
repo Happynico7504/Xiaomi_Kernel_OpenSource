@@ -39,8 +39,8 @@
 #define CPU_DVFS_VOLT11_VPROC_LL_FY    30000           /* 10uV */
 #define CPU_DVFS_VOLT12_VPROC_LL_FY    25000           /* 10uV */
 #define CPU_DVFS_VOLT13_VPROC_LL_FY    25000           /* 10uV */
-#define CPU_DVFS_VOLT14_VPROC_LL_FY    15000           /* 10uV */
-#define CPU_DVFS_VOLT15_VPROC_LL_FY    15000           /* 10uV */
+#define CPU_DVFS_VOLT14_VPROC_LL_FY    25000           /* 10uV */
+#define CPU_DVFS_VOLT15_VPROC_LL_FY    25000           /* 10uV */
 
 /* SB */
 /* for DVFS OPP table LL */
