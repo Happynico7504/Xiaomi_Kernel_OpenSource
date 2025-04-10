@@ -92,8 +92,8 @@ static void fbflush_callback(struct timer_list *t)
 
     kfree(session_input);
 
-reschedule:
-    mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(16));
+    reschedule:
+    mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(10));
 }
 
 /* static variable */
