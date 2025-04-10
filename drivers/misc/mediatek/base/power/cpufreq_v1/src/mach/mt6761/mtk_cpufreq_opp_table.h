@@ -25,8 +25,8 @@
 #define CPU_DVFS_FREQ14_LL_FY    50000     /* KHz */
 #define CPU_DVFS_FREQ15_LL_FY    25000     /* KHz */
 
-#define CPU_DVFS_VOLT0_VPROC_LL_FY    120000           /* 10uV */
-#define CPU_DVFS_VOLT1_VPROC_LL_FY    110000           /* 10uV */
+#define CPU_DVFS_VOLT0_VPROC_LL_FY    100000           /* 10uV */
+#define CPU_DVFS_VOLT1_VPROC_LL_FY    100000           /* 10uV */
 #define CPU_DVFS_VOLT2_VPROC_LL_FY    100000           /* 10uV */
 #define CPU_DVFS_VOLT3_VPROC_LL_FY     90000           /* 10uV */
 #define CPU_DVFS_VOLT4_VPROC_LL_FY     75000           /* 10uV */
