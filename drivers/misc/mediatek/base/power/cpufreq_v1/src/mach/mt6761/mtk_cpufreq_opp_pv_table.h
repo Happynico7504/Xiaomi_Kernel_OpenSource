@@ -22,10 +22,10 @@ static unsigned int fyTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
 	{  800, 60, 2, 1 },
 	{  500, 60, 2, 1 },
 	{  300, 60, 2, 1 },
-	{  100, 60, 2, 1 },
-	{   75, 45, 4, 1 },
-	{   50, 45, 4, 1 },
-	{   25, 45, 4, 1 },
+	{  250, 45, 2, 1 },
+	{  200, 45, 4, 1 },
+	{  150, 45, 4, 1 },
+	{  100, 45, 4, 1 },
 };
 
 static unsigned int sbTbl[NR_FREQ * NR_MT_CPU_DVFS][ARRAY_COL_SIZE] = {
