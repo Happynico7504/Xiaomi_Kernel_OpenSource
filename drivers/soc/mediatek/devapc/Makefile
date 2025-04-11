@@ -9,7 +9,7 @@ subdir-ccflags-$(CONFIG_MTK_ENG_BUILD) += -DDBG_ENABLE
 
 ifneq ($(wildcard $(LOCAL_PATH)/$(MTK_PLATFORM)/Makefile),)
   obj-$(CONFIG_DEVAPC_LEGACY) += $(MTK_PLATFORM)/
-else
+endif
   # Core
   obj-$(CONFIG_DEVAPC_ARCH_V1) += devapc-mtk-common.o
   obj-$(CONFIG_DEVAPC_ARCH_V2) += devapc-mtk-multi-ao.o
@@ -22,4 +22,3 @@ else
   obj-$(CONFIG_DEVAPC_MT6873) += devapc-mt6873.o
   obj-$(CONFIG_DEVAPC_MT6877) += devapc-mt6877.o
   obj-$(CONFIG_DEVAPC_MT6885) += devapc-mt6885.o
-endif
