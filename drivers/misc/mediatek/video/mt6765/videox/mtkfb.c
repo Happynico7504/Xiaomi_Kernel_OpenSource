@@ -259,7 +259,7 @@ static int mtkfb_open(struct fb_info *info, int user)
 	MSG_FUNC_LEAVE();
 
 	if (!timer_pending(&fbflush_timer))
-        mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(10)
+        mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(10));
 		
 	return 0;
 }
