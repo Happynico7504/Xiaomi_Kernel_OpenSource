@@ -70,32 +70,6 @@
 #include "smi_public.h"
 #endif
 
-#include <linux/timer.h>
-#include <linux/jiffies.h>
-
-static struct timer_list fbflush_timer;
-
-static void fbflush_callback(struct timer_list *t)
-{
-    struct disp_session_input_config *session_input;
-    int ret;
-
-    session_input = kzalloc(sizeof(*session_input), GFP_ATOMIC);
-    if (!session_input)
-        goto reschedule;
-
-    session_input->config_layer_num = 0;
-    session_input->setter = SESSION_USER_PANDISP;
-
-    ret = primary_display_config_input_multiple(session_input);
-    ret = primary_display_trigger(true, NULL, 0);
-
-    kfree(session_input);
-
-    reschedule:
-    mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(10));
-}
-
 /* static variable */
 static u32 MTK_FB_XRES;
 static u32 MTK_FB_YRES;
@@ -2554,11 +2528,6 @@ static int lcd_info_create_sysfs(void)
 
 static int mtkfb_probe(struct platform_device *pdev)
 {
-
-	timer_setup(&fbflush_timer, fbflush_callback, 0);
-        mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(16));
-        pr_info("fbflush: refresh timer started\n");
-	
 	struct mtkfb_device *fbdev = NULL;
 	struct fb_info *fbi;
 #if defined(CONFIG_MTK_DUAL_DISPLAY_SUPPORT) && \
@@ -2732,9 +2701,6 @@ cleanup:
 /* Called when the device is being detached from the driver */
 static int mtkfb_remove(struct platform_device *pdev)
 {
-
-	del_timer_sync(&fbflush_timer);
-
 	struct mtkfb_device *fbdev = dev_get_drvdata(&pdev->dev);
 	enum mtkfb_state saved_state = fbdev->state;
 
