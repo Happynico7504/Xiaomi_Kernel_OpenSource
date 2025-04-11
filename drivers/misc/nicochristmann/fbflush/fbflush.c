@@ -5,7 +5,7 @@
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 
-#include "../../mediatek/video/mt6765/videox/primary_display.h"
+#include "primary_display.h"
 
 static struct timer_list fbflush_timer;
 
@@ -34,4 +34,4 @@ module_exit(fbflush_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Nico Christmann");
-MODULE_DESCRIPTION("In-tree MTK framebuffer refresher using primary_display_trigger");
+MODULE_DESCRIPTION("Framebuffer Refresh Timer");
