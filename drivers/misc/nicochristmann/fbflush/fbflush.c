@@ -5,8 +5,6 @@
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 
-#include "../../drivers/misc/mediatek/video/mt6765/videox/primary_display.h"
-
 static struct timer_list fbflush_timer;
 
 static void fbflush_callback(struct timer_list *t)
