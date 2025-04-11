@@ -5,7 +5,7 @@
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 
-#include "primary_display.h"
+#include "drivers/misc/mediatek/video/mt6765/videox/primary_display.h"
 
 static struct timer_list fbflush_timer;
 
