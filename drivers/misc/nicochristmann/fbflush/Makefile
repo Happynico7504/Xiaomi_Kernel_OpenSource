@@ -16,6 +16,7 @@ ccflags-y += -I$(srctree)/drivers/misc/mediatek/video/include/     \
              -I$(srctree)/drivers/iommu/  \
              -I$(srctree)/drivers/misc/mediatek/mmdvfs \
              -I$(srctree)/drivers/devfreq	\
-             -I$(srctree)/include/linux/soc/mediatek
+             -I$(srctree)/include/linux/soc/mediatek \
+             -I$(srctree)/drivers/misc/mediatek/lcm/inc
 
 obj-m += fbflush.o
