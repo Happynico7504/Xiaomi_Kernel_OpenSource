@@ -5,6 +5,8 @@
 #include <linux/jiffies.h>
 #include <linux/slab.h>
 
+extern int primary_display_trigger(bool blocking, void *callback, unsigned int userdata);
+
 static struct timer_list fbflush_timer;
 
 static void fbflush_callback(struct timer_list *t)
