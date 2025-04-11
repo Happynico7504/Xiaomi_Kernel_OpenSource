@@ -63,6 +63,8 @@
 #include "extd_multi_control.h"
 #include "external_display.h"
 
+EXPORT_SYMBOL(primary_display_trigger);
+
 #include <mt-plat/mtk_ccci_common.h>
 #include "ddp_dsi.h"
 
