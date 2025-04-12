@@ -654,7 +654,7 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 		session_input->config[1].layer_id =
 			primary_display_get_option("ASSERT_LAYER");
 		session_input->config[1].next_buff_idx = -1;
-		session_input->config[1].layer_enable = 0;
+		session_input->config[1].layer_enable = 1;
 		session_input->config_layer_num++;
 	}
 	ret = primary_display_config_input_multiple(session_input);
