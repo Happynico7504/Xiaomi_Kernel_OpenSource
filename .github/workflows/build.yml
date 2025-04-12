@@ -24,6 +24,8 @@ jobs:
         sudo mv clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++-real
         sudo cp custom-scripts/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sudo cp custom-scripts/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
+        sudo chmod 755 custom-scripts/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang
+        sudo chmod 755 custom-scripts/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++
         sudo ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         sleep 15
         nproc
