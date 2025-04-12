@@ -11,7 +11,7 @@ static struct timer_list fbflush_timer;
 
 static void fbflush_callback(struct timer_list *t)
 {
-    primary_display_trigger(true, NULL, 0);
+    primary_display_trigger(1, NULL, 0);
     mod_timer(&fbflush_timer, jiffies + msecs_to_jiffies(10));
 }
 
