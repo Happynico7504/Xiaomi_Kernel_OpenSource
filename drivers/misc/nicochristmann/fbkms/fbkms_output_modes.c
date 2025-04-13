@@ -1,5 +1,6 @@
 #include <drm/drm_modes.h>
 #include "fbkms_output_modes.h"
+#include "fbkms_types.h"
 
 struct drm_display_mode fbkms_preferred_mode = {
     .clock = 71000,
