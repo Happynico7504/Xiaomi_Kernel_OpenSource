@@ -7,6 +7,8 @@
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_simple_kms_helper.h>
 
+#include "fbkms.h"
+
 struct fbkms_device {
     struct drm_device drm;
     struct drm_simple_display_pipe pipe;
