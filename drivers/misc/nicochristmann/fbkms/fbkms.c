@@ -1,153 +1,128 @@
-// SPDX-License-Identifier: GPL-2.0
+// fbkms.c - DRM KMS-to-fb0 redirector for Linux 4.19.x
+
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/fb.h>
-#include <linux/uaccess.h>
-#include <linux/fs.h>
-#include <linux/vmalloc.h>
-#include <linux/mm.h>
-
-#include <drm/drm_drv.h>
-#include <drm/drm_gem_framebuffer_helper.h>
-#include <drm/drm_simple_kms_helper.h>
-#include <drm/drm_fb_cma_helper.h>
+#include <drm/drmP.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_crtc_helper.h>
 #include <drm/drm_gem_cma_helper.h>
-
-#define DRIVER_NAME "fbkms"
-#define DRIVER_DESC "DRM-to-fb0 KMS driver"
-#define DRIVER_DATE "20250413"
-#define DRIVER_MAJOR 1
-#define DRIVER_MINOR 0
+#include <drm/drm_simple_kms_helper.h>
 
 struct fbkms_device {
-	struct drm_device drm;
-	struct drm_simple_display_pipe pipe;
-	struct fb_info *fbinfo;
+    struct drm_device drm;
+    struct drm_simple_display_pipe pipe;
+    struct drm_display_mode mode;
+    struct fb_info *fb;
 };
 
 static int fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
-			   struct drm_crtc_state *crtc_state,
-			   struct drm_plane_state *plane_state)
+                             struct drm_crtc_state *crtc_state,
+                             struct drm_plane_state *plane_state)
 {
-	struct drm_framebuffer *fb = plane_state->fb;
-	struct drm_gem_cma_object *obj;
-	void *src;
-	struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
+    struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
+    struct drm_framebuffer *fb = plane_state->fb;
+    struct drm_gem_cma_object *cma_obj = drm_fb_cma_get_gem_obj(fb, 0);
+    void *src = cma_obj->vaddr;
 
-	if (!fb || !fbkms->fbinfo || !fb->obj[0])
-		return -EINVAL;
+    if (!fbkms->fb)
+        return -ENODEV;
 
-	obj = drm_fb_cma_get_gem_obj(fb, 0);
-	src = obj->vaddr;
-
-	memcpy(fbkms->fbinfo->screen_base, src, fb->height * fb->pitches[0]);
-
-	return 0;
+    memcpy(fbkms->fb->screen_base, src,
+           fb->height * fb->pitches[0]);
+    return 0;
 }
 
 static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 {
-	// No-op
+    // No-op for now
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
-	.enable = fbkms_pipe_enable,
-	.disable = fbkms_pipe_disable,
+    .enable = fbkms_pipe_enable,
+    .disable = fbkms_pipe_disable,
 };
 
-static const struct drm_mode_config_funcs fbkms_config_funcs = {
-	.fb_create = drm_gem_fb_create,
-	.atomic_check = drm_atomic_helper_check,
-	.atomic_commit = drm_atomic_helper_commit,
-};
-
-static struct drm_driver fbkms_driver = {
-	.driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
-	.name = DRIVER_NAME,
-	.desc = DRIVER_DESC,
-	.date = DRIVER_DATE,
-	.major = DRIVER_MAJOR,
-	.minor = DRIVER_MINOR,
-	DRM_GEM_CMA_DRIVER_OPS,
+static const uint32_t fbkms_formats[] = {
+    DRM_FORMAT_XRGB8888,
 };
 
 static int fbkms_probe(struct platform_device *pdev)
 {
-	struct drm_device *drm;
-	struct fbkms_device *fbkms;
-	struct drm_display_mode *mode;
-	struct drm_connector *connector;
-	static const u32 formats[] = { DRM_FORMAT_XRGB8888 };
-	int ret;
+    struct fbkms_device *fbkms;
+    int ret;
 
-	fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
-	if (!fbkms)
-		return -ENOMEM;
+    fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
+    if (!fbkms)
+        return -ENOMEM;
 
-	drm = &fbkms->drm;
+    platform_set_drvdata(pdev, fbkms);
 
-	ret = devm_drm_dev_init(&pdev->dev, drm, &fbkms_driver);
-	if (ret)
-		return ret;
+    fbkms->drm.dev = &pdev->dev;
+    ret = drm_dev_init(&fbkms->drm, &fbkms_driver);
+    if (ret)
+        return ret;
 
-	drm_mode_config_init(drm);
-	drm->mode_config.funcs = &fbkms_config_funcs;
-	drm->mode_config.min_width = 720;
-	drm->mode_config.max_width = 720;
-	drm->mode_config.min_height = 1600;
-	drm->mode_config.max_height = 1600;
+    fbkms->fb = registered_fb[0];
+    if (!fbkms->fb)
+        return -ENODEV;
 
-	mode = drm_mode_create(drm);
-	if (!mode)
-		return -ENOMEM;
+    drm_mode_config_init(&fbkms->drm);
 
-	drm_mode_set_name(mode);
-	mode->type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
-	mode->clock = 60000;
-	mode->hdisplay = 720;
-	mode->hsync_start = 740;
-	mode->hsync_end = 760;
-	mode->htotal = 800;
-	mode->vdisplay = 1600;
-	mode->vsync_start = 1610;
-	mode->vsync_end = 1620;
-	mode->vtotal = 1650;
+    fbkms->mode.clock = 71000;
+    fbkms->mode.hdisplay = 720;
+    fbkms->mode.vdisplay = 1600;
+    fbkms->mode.vrefresh = 60;
+    fbkms->mode.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC;
+    fbkms->mode.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+    strcpy(fbkms->mode.name, "720x1600");
 
-	ret = drm_simple_display_pipe_init(drm, &fbkms->pipe, &fbkms_pipe_funcs,
-					formats, ARRAY_SIZE(formats), NULL, mode);
-	if (ret)
-		return ret;
+    ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
+                                       &fbkms_pipe_funcs, fbkms_formats,
+                                       ARRAY_SIZE(fbkms_formats), NULL,
+                                       &fbkms->mode);
+    if (ret)
+        return ret;
 
-	connector = &fbkms->pipe.connector;
-	ret = drm_connector_attach_encoder(connector, &fbkms->pipe.encoder);
-	if (ret)
-		return ret;
+    drm_mode_config_reset(&fbkms->drm);
 
-	drm_mode_config_reset(drm);
-	platform_set_drvdata(pdev, fbkms);
+    ret = drm_dev_register(&fbkms->drm, 0);
+    if (ret)
+        return ret;
 
-	fbkms->fbinfo = registered_fb[0]; // assumes fb0 exists
-	return drm_dev_register(drm, 0);
+    dev_info(&pdev->dev, "fbkms registered successfully\n");
+    return 0;
 }
 
 static int fbkms_remove(struct platform_device *pdev)
 {
-	struct fbkms_device *fbkms = platform_get_drvdata(pdev);
-	drm_dev_unregister(&fbkms->drm);
-	drm_mode_config_cleanup(&fbkms->drm);
-	return 0;
+    struct fbkms_device *fbkms = platform_get_drvdata(pdev);
+    drm_dev_unregister(&fbkms->drm);
+    drm_mode_config_cleanup(&fbkms->drm);
+    return 0;
 }
 
 static struct platform_driver fbkms_platform_driver = {
-	.probe = fbkms_probe,
-	.remove = fbkms_remove,
-	.driver = {
-		.name = DRIVER_NAME,
-	},
+    .probe = fbkms_probe,
+    .remove = fbkms_remove,
+    .driver = {
+        .name = "fbkms",
+    },
 };
 
-module_platform_driver(fbkms_platform_driver);
+static int __init fbkms_init(void)
+{
+    return platform_driver_register(&fbkms_platform_driver);
+}
 
-MODULE_DESCRIPTION(DRIVER_DESC);
+static void __exit fbkms_exit(void)
+{
+    platform_driver_unregister(&fbkms_platform_driver);
+}
+
+module_init(fbkms_init);
+module_exit(fbkms_exit);
+
 MODULE_AUTHOR("Nico Christmann");
+MODULE_DESCRIPTION("Framebuffer KMS");
 MODULE_LICENSE("GPL");
