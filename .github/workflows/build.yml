@@ -37,6 +37,7 @@ jobs:
     - run: "sudo rm ccache.tar.gz || true"
     - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
     - run: "[ ! -s buildcache/System.map ] && rm buildcache/System.map || true"
+    - run: "[ ! -s buildcache/arch/arm64/boot/Image.gz.sha512 ] && rm buildcache/arch/arm64/boot/Image.gz.sha512 || true"
     - run: |
         sha512sum buildcache/arch/arm64/boot/Image.gz | sudo tee buildcache/arch/arm64/boot/Image.gz.sha512 || true
         sha512sum buildcache/System.map > buildcache/System.map.sha512 || true
