@@ -51,6 +51,8 @@ jobs:
         prerelease: true
         title: "Automatic build ${{ env.SHORT_SHA }}"
         files: |
+          ccache.tar.gz
+          ccache.tar.gz.sha512
           buildcache/arch/arm64/boot/Image.gz
           buildcache/arch/arm64/boot/Image.gz.sha512
           buildcache/kernel/kheaders_data.tar.xz
@@ -61,5 +63,3 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
-          ccache.tar.gz
-          ccache.tar.gz.sha512
