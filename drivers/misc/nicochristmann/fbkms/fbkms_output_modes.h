@@ -1,6 +1,8 @@
 #ifndef FBKMS_OUTPUT_MODES_H
 #define FBKMS_OUTPUT_MODES_H
 
+#include "fbkms_types.h"
+
 static inline void fbkms_setup_mode(struct fbkms_device *fbkms)
 {
     fbkms->mode.clock = 71000;
