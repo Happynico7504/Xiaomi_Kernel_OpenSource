@@ -10,16 +10,16 @@ jobs:
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
-        sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz > /dev/null || true
+        sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz 2> /dev/null || true
         sudo tar -xf ccache.tar.gz || true
-        sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
-        sudo unzip ice-s-oss.zip || true
+        sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
+        sudo unzip ice-s-oss.zip 2> /dev/null || true
         sudo cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
-        sudo wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip > /dev/null || true
-        sudo unzip main.zip > /dev/null || true
+        sudo wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip 2> /dev/null || true
+        sudo unzip main.zip 2> /dev/null || true
         sudo mkdir drivers/misc/nicochristmann/usbwifi/src || true
         sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
-        sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz > /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip ccache > /dev/null
+        sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz 2> /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip ccache > /dev/null
         sudo mv clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang-real
         sudo mv clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++-real
         sudo cp custom-scripts/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
@@ -32,17 +32,17 @@ jobs:
         sleep 15
     - run: "sudo USE_CCACHE=1 CCACHE_DIR=/home/runner/work/Xiaomi_Kernel_OpenSource/Xiaomi_Kernel_OpenSource/ccache PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH KBUILD_OUTPUT=buildcache COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j$(($(nproc) * 4)) || true"
     - run: "sudo cp $(sudo find -iname *.ko) modules || true"
-    - run: "sudo tar -c modules | gzip -9 > modules.tar.gz"
-    - run: "sudo cat buildcache/.config | gzip -9 > config.gz"
-    - run: "sudo rm ccache.tar.gz"
-    - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz"
+    - run: "sudo tar -c modules | gzip -9 > modules.tar.gz || true"
+    - run: "sudo cat buildcache/.config | gzip -9 > config.gz || true"
+    - run: "sudo rm ccache.tar.gz || true"
+    - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
     - run: "[ ! -s buildcache/System.map ] && rm buildcache/System.map || true"
     - run: |
         sha512sum buildcache/arch/arm64/boot/Image.gz > buildcache/arch/arm64/boot/Image.gz.sha512 || true
         sha512sum buildcache/System.map > buildcache/System.map.sha512 || true
         sha512sum config.gz > config.gz.sha512 || true
         sha512sum modules.tar.gz > modules.tar.gz.sha512 || true
-        sha512sum ccache.tar.gz > ccache.tar.gz.sha512
+        sha512sum ccache.tar.gz > ccache.tar.gz.sha512 || true
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
         repo_token: "${{ secrets.GITHUB_TOKEN }}"
