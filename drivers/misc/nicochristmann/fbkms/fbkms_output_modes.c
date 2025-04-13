@@ -11,3 +11,5 @@ struct drm_display_mode fbkms_preferred_mode = {
     .type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
     .name = "720x1600"
 };
+
+EXPORT_SYMBOL(fbkms_preferred_mode);
