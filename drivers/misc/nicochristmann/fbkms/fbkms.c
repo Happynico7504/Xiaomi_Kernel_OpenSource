@@ -8,6 +8,7 @@
 #include <drm/drm_simple_kms_helper.h>
 
 #include "fbkms_connector_helpers.h"
+#include "fbkms_output_modes.h"
 
 struct fbkms_device {
     struct drm_device drm;
@@ -76,16 +77,6 @@ static int fbkms_probe(struct platform_device *pdev)
     fbkms->fb = registered_fb[0];
     if (!fbkms->fb)
         return -ENODEV;
-
-    drm_mode_config_init(&fbkms->drm);
-
-    fbkms->mode.clock = 71000;
-    fbkms->mode.hdisplay = 720;
-    fbkms->mode.vdisplay = 1600;
-    fbkms->mode.vrefresh = 60;
-    fbkms->mode.flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC;
-    fbkms->mode.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
-    strcpy(fbkms->mode.name, "720x1600");
 
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                        &fbkms_pipe_funcs, fbkms_formats,
