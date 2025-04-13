@@ -57,6 +57,13 @@ static struct drm_driver fbkms_driver = {
 
 static int fbkms_probe(struct platform_device *pdev)
 {
+
+    fbkms->fb = registered_fb[0];
+    if (!fbkms->fb || !fbkms->fb->screen_base) {
+    dev_err(&pdev->dev, "fb0 not available\n");
+    return -ENODEV;
+    }
+
     struct fbkms_device *fbkms;
     int ret;
 
