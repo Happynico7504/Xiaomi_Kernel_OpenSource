@@ -10,6 +10,9 @@
 #include "fbkms_connector_helpers.h"
 #include "fbkms_output_modes.h"
 
+drm_mode_config_init(&fbkms->drm);
+fbkms_setup_mode(fbkms);
+
 struct fbkms_device {
     struct drm_device drm;
     struct drm_simple_display_pipe pipe;
