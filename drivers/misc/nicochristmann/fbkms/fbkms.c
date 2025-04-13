@@ -7,6 +7,19 @@
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_simple_kms_helper.h>
 
+static struct drm_driver fbkms_driver = {
+    .driver_features = DRIVER_MODESET | DRIVER_GEM,
+    .name = "fbkms",
+    .desc = "Framebuffer KMS",
+    .date = "20250413",
+    .fops = NULL,
+    .gem_free_object_unlocked = drm_gem_cma_free_object,
+    .dumb_create = drm_gem_cma_dumb_create,
+    .dumb_map_offset = drm_gem_cma_dumb_map_offset,
+    .dumb_destroy = drm_gem_dumb_destroy,
+};
+
+
 struct fbkms_device {
     struct drm_device drm;
     struct drm_simple_display_pipe pipe;
