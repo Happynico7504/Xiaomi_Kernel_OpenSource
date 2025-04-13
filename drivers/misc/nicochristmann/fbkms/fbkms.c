@@ -40,7 +40,7 @@ static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
-    .enable = (void *)fbkms_pipe_enable, // Cast to silence warning on mismatched prototype
+    .enable = fbkms_pipe_enable,
     .disable = fbkms_pipe_disable,
 };
 
@@ -84,13 +84,12 @@ static int fbkms_probe(struct platform_device *pdev)
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
-                                       &fbkms_conn_funcs,
-                                       &fbkms->mode);
-
-    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
-
+                                       NULL,
+                                       &fbkms->pipe.connector);
     if (ret)
         return ret;
+
+    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
 
     drm_mode_config_reset(&fbkms->drm);
 
