@@ -78,11 +78,11 @@ static int fbkms_probe(struct platform_device *pdev)
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
                                        NULL,
-                                       &fbkms->pipe.connector);
+                                       fbkms->pipe.connector);
     if (ret)
         return ret;
 
-    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
+    drm_connector_helper_add(fbkms->pipe.connector, &fbkms_conn_helper_funcs);
 
     drm_mode_config_reset(&fbkms->drm);
 
