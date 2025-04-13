@@ -9,13 +9,7 @@
 
 #include "fbkms_connector_helpers.h"
 #include "fbkms_output_modes.h"
-
-struct fbkms_device {
-    struct drm_device drm;
-    struct drm_simple_display_pipe pipe;
-    struct drm_display_mode mode;
-    struct fb_info *fb;
-};
+#include "fbkms_types.h"
 
 static int fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                              struct drm_crtc_state *crtc_state,
