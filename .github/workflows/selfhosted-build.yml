@@ -10,10 +10,10 @@ jobs:
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
-        wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip > /dev/null || true
+        wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
         unzip ice-s-oss.zip || true
         cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
-        wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip || true
+        wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip 2> /dev/null || true
         unzip main.zip || true
         mkdir drivers/misc/nicochristmann/usbwifi/src || true
         cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
@@ -23,10 +23,13 @@ jobs:
         sleep 15
     - run: "USE_CCACHE=1 CCACHE_DIR=/home/runner/ccache PATH=/home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH KBUILD_OUTPUT=buildcache COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=/home/runner/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=\"ccache clang\" LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j128 || true"
     - run: "cp $(find -iname *.ko) modules || true"
-    - run: "tar -c modules | gzip -9 > modules.tar.gz"
-    - run: "tar -c buildcache | gzip -9 > buildcache.tar.gz"
+    - run: "tar -c modules | gzip -9 > modules.tar.gz || true"
+    - run: "cat buildcache/.config | gzip -9 > config.gz || true"
+    - run: "[ ! -s buildcache/System.map ] && rm buildcache/System.map || true"
     - run: |
-        sha512sum buildcache.tar.gz > buildcache.tar.gz.sha512 || true
+        sha512sum buildcache/arch/arm64/boot/Image.gz > buildcache/arch/arm64/boot/Image.gz.sha512 || true
+        sha512sum buildcache/System.map > buildcache/System.map.sha512 || true
+        sha512sum config.gz > config.gz.sha512 || true
         sha512sum modules.tar.gz > modules.tar.gz.sha512 || true
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
@@ -38,7 +41,7 @@ jobs:
           buildcache/arch/arm64/boot/Image.gz
           buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
-          buildcache.tar.gz
-          buildcache.tar.gz.sha512
+          config.gz
+          config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
