@@ -5,11 +5,16 @@
 #include <linux/uaccess.h>
 #include <linux/of.h>
 #include <linux/of_device.h>
-#include <drm/drm_drv.h>
 #include <drm/drm_device.h>
-#include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_modeset_helper_vtables.h>
+#include <drm/drm_drv.h>
+#include <drm/drm_fb_helper.h>
+#include <drm/drm_gem_framebuffer_helper.h>
+#include <drm/drm_gem_cma_helper.h>
+#include <drm/drm_prime.h>
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_simple_kms_helper.h>
+
 
 static struct fb_info *fbinfo;
 
@@ -44,11 +49,9 @@ static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
 
 static const struct drm_mode_config_funcs fbkms_mode_config_funcs = {
     .fb_create = drm_gem_fb_create,
-    .atomic_check = drm_atomic_helper_check,
-    .atomic_commit = drm_atomic_helper_commit,
 };
 
-static const struct drm_driver fbkms_driver = {
+static struct drm_driver fbkms_driver = {
     .driver_features = DRIVER_MODESET | DRIVER_GEM | DRIVER_ATOMIC,
     .name = "fbkms",
     .desc = "DRM-KMS to FB redirect",
@@ -105,7 +108,7 @@ static int fbkms_platform_probe(struct platform_device *pdev)
 
     ret = drm_simple_display_pipe_init(drm, pipe, &fbkms_pipe_funcs,
                                        (const struct drm_display_mode *[]){ mode }, 1,
-                                       NULL, NULL, NULL);
+                                       NULL, NULL);
     if (ret)
         return ret;
 
