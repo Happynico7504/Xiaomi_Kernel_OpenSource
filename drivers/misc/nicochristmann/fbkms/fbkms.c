@@ -1,5 +1,3 @@
-// fbkms.c - DRM KMS-to-fb0 redirector for Linux 4.19.x
-
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/fb.h>
