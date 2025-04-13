@@ -56,19 +56,18 @@ static struct drm_driver fbkms_driver = {
 
 static int fbkms_probe(struct platform_device *pdev)
 {
-
-    fbkms->fb = registered_fb[0];
-    if (!fbkms->fb || !fbkms->fb->screen_base) {
-    dev_err(&pdev->dev, "fb0 not available\n");
-    return -ENODEV;
-    }
-
     struct fbkms_device *fbkms;
     int ret;
 
     fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
     if (!fbkms)
         return -ENOMEM;
+
+    fbkms->fb = registered_fb[0];
+    if (!fbkms->fb || !fbkms->fb->screen_base) {
+        dev_err(&pdev->dev, "fb0 not available\n");
+        return -ENODEV;
+    }
 
     platform_set_drvdata(pdev, fbkms);
 
@@ -77,10 +76,6 @@ static int fbkms_probe(struct platform_device *pdev)
     if (ret)
         return ret;
 
-    fbkms->fb = registered_fb[0];
-    if (!fbkms->fb)
-        return -ENODEV;
-
     drm_mode_config_init(&fbkms->drm);
     fbkms_setup_mode(fbkms);
 
@@ -88,11 +83,11 @@ static int fbkms_probe(struct platform_device *pdev)
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
                                        NULL,
-                                       fbkms->pipe.connector);
+                                       &fbkms->pipe.connector);
     if (ret)
         return ret;
 
-    drm_connector_helper_add(fbkms->pipe.connector, &fbkms_conn_helper_funcs);
+    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
 
     drm_mode_config_reset(&fbkms->drm);
 
