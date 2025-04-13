@@ -4,10 +4,6 @@
 #include <drm/drm_connector.h>
 #include <drm/drm_modes.h>
 
-// Declare externally used structures
-extern const struct drm_connector_helper_funcs fbkms_conn_helper_funcs;
-extern const struct drm_connector_funcs fbkms_conn_funcs;
-
 // Inline wrapper for mode setup
 static inline int fbkms_get_modes(struct drm_connector *connector,
                                   struct drm_display_mode *preferred_mode)
@@ -24,14 +20,14 @@ static inline int fbkms_get_modes(struct drm_connector *connector,
     return 1;
 }
 
-// Wrapper so the .get_modes signature matches drm_connector_funcs
+
 static int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
     extern struct drm_display_mode fbkms_preferred_mode; // Defined in your modes header
     return fbkms_get_modes(connector, &fbkms_preferred_mode);
 }
 
-// Actual connector funcs
+
 static const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
     .fill_modes = drm_helper_probe_single_connector_modes,
