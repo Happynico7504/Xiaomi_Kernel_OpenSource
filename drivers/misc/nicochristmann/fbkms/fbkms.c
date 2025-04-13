@@ -10,9 +10,6 @@
 #include "fbkms_connector_helpers.h"
 #include "fbkms_output_modes.h"
 
-drm_mode_config_init(&fbkms->drm);
-fbkms_setup_mode(fbkms);
-
 struct fbkms_device {
     struct drm_device drm;
     struct drm_simple_display_pipe pipe;
@@ -80,6 +77,9 @@ static int fbkms_probe(struct platform_device *pdev)
     fbkms->fb = registered_fb[0];
     if (!fbkms->fb)
         return -ENODEV;
+
+    drm_mode_config_init(&fbkms->drm);
+    fbkms_setup_mode(fbkms);
 
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                        &fbkms_pipe_funcs, fbkms_formats,
