@@ -28,3 +28,10 @@ static const struct drm_connector_funcs fbkms_conn_funcs = {
 static const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
 };
+
+ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
+                                   &fbkms_pipe_funcs, fbkms_formats,
+                                   ARRAY_SIZE(fbkms_formats), NULL,
+                                   &fbkms->mode);
+if (ret)
+    return ret;
