@@ -11,9 +11,9 @@
 #include "fbkms_output_modes.h"
 #include "fbkms_types.h"
 
-static int fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
-                             struct drm_crtc_state *crtc_state,
-                             struct drm_plane_state *plane_state)
+static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
+                              struct drm_crtc_state *crtc_state,
+                              struct drm_plane_state *plane_state)
 {
     struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
     struct drm_framebuffer *fb = plane_state->fb;
@@ -21,11 +21,10 @@ static int fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
     void *src = cma_obj->vaddr;
 
     if (!fbkms->fb)
-        return -ENODEV;
+        return;
 
     memcpy(fbkms->fb->screen_base, src,
            fb->height * fb->pitches[0]);
-    return 0;
 }
 
 static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
@@ -34,6 +33,7 @@ static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
+    .enable = fbkms_pipe_enable,
     .disable = fbkms_pipe_disable,
 };
 
