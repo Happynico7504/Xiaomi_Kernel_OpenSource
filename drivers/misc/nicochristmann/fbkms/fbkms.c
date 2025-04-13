@@ -89,7 +89,8 @@ static int fbkms_probe(struct platform_device *pdev)
 
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                        &fbkms_pipe_funcs, fbkms_formats,
-                                       ARRAY_SIZE(fbkms_formats), NULL,
+                                       ARRAY_SIZE(fbkms_formats),
+                                       &fbkms_conn_funcs,
                                        &fbkms->mode);
     if (ret)
         return ret;
