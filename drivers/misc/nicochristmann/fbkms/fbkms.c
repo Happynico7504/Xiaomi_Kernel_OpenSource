@@ -7,7 +7,7 @@
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_simple_kms_helper.h>
 
-#include "fbkms.h"
+#include "fbkms_connector_helpers.h"
 
 struct fbkms_device {
     struct drm_device drm;
