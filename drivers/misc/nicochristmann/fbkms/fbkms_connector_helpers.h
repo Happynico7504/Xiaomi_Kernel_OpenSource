@@ -1,3 +1,14 @@
+#ifndef FBKMS_CONNECTOR_HELPERS_H
+#define FBKMS_CONNECTOR_HELPERS_H
+
+#include <drm/drm_connector.h>
+#include <drm/drm_modes.h>
+
+// Declare externally used structures
+extern const struct drm_connector_helper_funcs fbkms_conn_helper_funcs;
+extern const struct drm_connector_funcs fbkms_conn_funcs;
+
+// Inline wrapper for mode setup
 static inline int fbkms_get_modes(struct drm_connector *connector,
                                   struct drm_display_mode *preferred_mode)
 {
@@ -13,25 +24,23 @@ static inline int fbkms_get_modes(struct drm_connector *connector,
     return 1;
 }
 
+// Wrapper so the .get_modes signature matches drm_connector_funcs
 static int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
-    struct fbkms_device *fbkms = container_of(connector->dev, struct fbkms_device, drm);
-    return fbkms_get_modes(connector, &fbkms->mode);
+    extern struct drm_display_mode fbkms_preferred_mode; // Defined in your modes header
+    return fbkms_get_modes(connector, &fbkms_preferred_mode);
 }
 
-static const struct drm_connector_funcs fbkms_conn_funcs = {
+// Actual connector funcs
+const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
     .destroy = drm_connector_cleanup,
     .fill_modes = drm_helper_probe_single_connector_modes,
-};
-
-static const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
 };
 
-ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
-                                   &fbkms_pipe_funcs, fbkms_formats,
-                                   ARRAY_SIZE(fbkms_formats), NULL,
-                                   &fbkms->mode);
-if (ret)
-    return ret;
+const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
+    .get_modes = fbkms_get_modes_wrapper,
+};
+
+#endif // FBKMS_CONNECTOR_HELPERS_H
