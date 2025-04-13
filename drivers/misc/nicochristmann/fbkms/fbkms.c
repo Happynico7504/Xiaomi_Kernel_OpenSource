@@ -34,7 +34,6 @@ static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
-    .enable = fbkms_pipe_enable,
     .disable = fbkms_pipe_disable,
 };
 
