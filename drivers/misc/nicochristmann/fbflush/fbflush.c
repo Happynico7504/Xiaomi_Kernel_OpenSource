@@ -11,14 +11,14 @@ static struct delayed_work fbflush_work;
 static void fbflush_work_func(struct work_struct *work)
 {
     primary_display_trigger(true, NULL, 0);
-    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(10));
+    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(5));
 }
 
 static int __init fbflush_init(void)
 {
     pr_info("fbflush: scheduling display refresh work\n");
     INIT_DELAYED_WORK(&fbflush_work, fbflush_work_func);
-    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(1000));
+    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(5000));
     return 0;
 }
 
