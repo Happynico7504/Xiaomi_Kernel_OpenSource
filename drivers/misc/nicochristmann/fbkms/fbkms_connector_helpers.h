@@ -8,6 +8,9 @@
 static inline int fbkms_get_modes(struct drm_connector *connector,
                                   struct drm_display_mode *preferred_mode)
 {
+
+    pr_info("fbkms_get_modes called\n");
+
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, preferred_mode);
     if (!mode)
         return 0;
@@ -22,6 +25,8 @@ static inline int fbkms_get_modes(struct drm_connector *connector,
 
 static int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
+    pr_info("fbkms_get_modes_wrapper called\n");
+  
     extern struct drm_display_mode fbkms_preferred_mode;
     return fbkms_get_modes(connector, &fbkms_preferred_mode);
 }
