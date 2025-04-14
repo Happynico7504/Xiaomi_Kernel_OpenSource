@@ -83,7 +83,7 @@ static int fbkms_probe(struct platform_device *pdev)
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
                                        NULL,
-                                       NULL);
+                                       &fbkms->pipe.connector);
     if (ret)
         return ret;
 
@@ -92,6 +92,14 @@ static int fbkms_probe(struct platform_device *pdev)
     ret = drm_dev_register(&fbkms->drm, 0);
     if (ret)
         return ret;
+
+   struct drm_connector *conn = &fbkms->pipe.connector;
+
+   drm_connector_init(&fbkms->drm, conn,
+                   &fbkms_connector_funcs, DRM_MODE_CONNECTOR_VIRTUAL);
+   drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
+   drm_connector_register(conn);
+
 
     dev_info(&pdev->dev, "fbkms registered successfully\n");
     return 0;
