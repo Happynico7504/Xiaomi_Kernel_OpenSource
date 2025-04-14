@@ -29,7 +29,6 @@ static int fbkms_get_modes_wrapper(struct drm_connector *connector)
 static const struct drm_connector_funcs fbkms_conn_funcs = {
     .fill_modes = drm_helper_probe_single_connector_modes,
     .destroy = drm_connector_cleanup,
-    .dpms = NULL, // or an appropriate dpms function if needed
 };
 
 
