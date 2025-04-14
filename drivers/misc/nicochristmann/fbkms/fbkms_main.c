@@ -83,7 +83,7 @@ static int fbkms_probe(struct platform_device *pdev)
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
                                        NULL,
-                                       &fbkms->pipe.connector);
+                                       NULL);
     if (ret)
         return ret;
 
