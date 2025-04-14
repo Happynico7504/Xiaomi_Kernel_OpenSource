@@ -97,9 +97,6 @@ static int fbkms_probe(struct platform_device *pdev)
 
    struct drm_connector *conn = &fbkms->pipe.connector;
 
-
-
-
     dev_info(&pdev->dev, "fbkms registered successfully\n");
     return 0;
 }
@@ -107,8 +104,10 @@ static int fbkms_probe(struct platform_device *pdev)
 static int fbkms_remove(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms = platform_get_drvdata(pdev);
+    drm_connector_unregister(&fbkms->pipe.connector);
     drm_dev_unregister(&fbkms->drm);
     drm_mode_config_cleanup(&fbkms->drm);
+    drm_dev_put(&fbkms->drm);
     return 0;
 }
 
