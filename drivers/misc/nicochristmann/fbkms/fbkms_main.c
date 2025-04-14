@@ -87,6 +87,8 @@ static int fbkms_probe(struct platform_device *pdev)
     if (ret)
         return ret;
 
+    fbkms->pipe.connector->funcs = &fbkms_connector_funcs;
+
     drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
 
     drm_mode_config_reset(&fbkms->drm);
