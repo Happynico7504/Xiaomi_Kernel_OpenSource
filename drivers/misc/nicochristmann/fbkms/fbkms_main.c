@@ -14,17 +14,12 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
                               struct drm_plane_state *plane_state)
 {
-
-    if (!plane_state || !plane_state->fb || !plane_state->fb->obj[0]) return;
   
     struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
 
-    struct drm_framebuffer *fb = plane_state->fb;
+
     struct drm_gem_cma_object *cma_obj = to_drm_gem_cma_obj(fb->obj[0]);
     void *src = cma_obj->vaddr;
-
-    if (!fbkms->fb)
-        return;
 
     memcpy(fbkms->fb->screen_base, src,
            fb->height * fb->pitches[0]);
