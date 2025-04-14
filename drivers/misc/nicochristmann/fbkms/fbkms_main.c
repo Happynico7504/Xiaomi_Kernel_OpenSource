@@ -17,6 +17,7 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
   
     struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
 
+    struct drm_framebuffer *fb = plane_state->fb;
 
     struct drm_gem_cma_object *cma_obj = to_drm_gem_cma_obj(fb->obj[0]);
     void *src = cma_obj->vaddr;
