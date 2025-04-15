@@ -53,6 +53,7 @@ static struct drm_driver fbkms_driver = {
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
+    struct drm_connector *conn;
     int ret;
 
     fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
@@ -83,34 +84,29 @@ static int fbkms_probe(struct platform_device *pdev)
     if (ret)
         return ret;
 
-    fbkms->pipe.connector->funcs = &fbkms_connector_funcs;
+    conn = &fbkms->pipe.connector;
 
-    ret = drm_connector_init(&fbkms->drm, conn, &fbkms_connector_funcs,
-                         DRM_MODE_CONNECTOR_VIRTUAL);
+    conn->funcs = &fbkms_connector_funcs;
+    drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
+
+    conn->display_info.width_mm = 68;
+    conn->display_info.height_mm = 122;
+    conn->polled = DRM_CONNECTOR_POLL_HPD;
+
+    ret = drm_connector_register(conn);
     if (ret)
         return ret;
 
-drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
-
-ret = drm_connector_register(conn);
-if (ret)
-    return ret;
-  
     drm_mode_config_reset(&fbkms->drm);
 
     ret = drm_dev_register(&fbkms->drm, 0);
     if (ret)
         return ret;
 
-   struct drm_connector *conn = &fbkms->pipe.connector;
-
-   conn->display_info.width_mm = 68;
-   conn->display_info.height_mm = 122;
-   conn->polled = DRM_CONNECTOR_POLL_HPD;
-
     dev_info(&pdev->dev, "fbkms registered successfully\n");
     return 0;
 }
+
 
 static int fbkms_remove(struct platform_device *pdev)
 {
