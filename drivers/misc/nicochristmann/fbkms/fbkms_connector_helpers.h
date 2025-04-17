@@ -4,12 +4,11 @@
 #include <drm/drm_connector.h>
 #include <drm/drm_modes.h>
 
-// Inline wrapper for mode setup
 static inline int fbkms_get_modes(struct drm_connector *connector,
                                   struct drm_display_mode *preferred_mode)
 {
 
-    pr_info("fbkms_get_modes called\n");
+    pr_info("loading modes\n");
 
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, preferred_mode);
     if (!mode)
@@ -25,7 +24,7 @@ static inline int fbkms_get_modes(struct drm_connector *connector,
 
 static int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
-    pr_info("fbkms_get_modes_wrapper called\n");
+    pr_info("prepare for mode loading\n");
   
     extern struct drm_display_mode fbkms_preferred_mode;
     return fbkms_get_modes(connector, &fbkms_preferred_mode);
