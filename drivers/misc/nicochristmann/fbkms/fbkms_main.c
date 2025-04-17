@@ -143,7 +143,7 @@ static int __init fbkms_init(void)
 static void __exit fbkms_exit(void)
 {
     platform_driver_unregister(&fbkms_platform_driver);
-    dev_info(&pdev->dev, "fbkms exited successfully\n");
+    pr_info("fbkms exited successfully\n");
 }
 
 module_init(fbkms_init);
