@@ -16,8 +16,6 @@ static inline int fbkms_get_modes(struct drm_connector *connector,
 
     mode->type |= DRM_MODE_TYPE_PREFERRED;
     drm_mode_probed_add(connector, mode);
-    connector->display_info.width_mm = 68;
-    connector->display_info.height_mm = 136;
 
     return 1;
 }
