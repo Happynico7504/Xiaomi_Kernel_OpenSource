@@ -25,13 +25,13 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
     memcpy(fbkms->fb->screen_base, src,
            fb->height * fb->pitches[0]);
 
-    dev_info(&pdev->dev, "fbkms pipe enabled\n");
+    pr_info("fbkms pipe enabled\n");
   
 }
 
 static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 {
-    dev_info(&pdev->dev, "fbkms pipe disabled\n");
+    pr_info("fbkms pipe disabled\n");
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
@@ -122,7 +122,7 @@ static int fbkms_remove(struct platform_device *pdev)
     drm_dev_unregister(&fbkms->drm);
     drm_mode_config_cleanup(&fbkms->drm);
     drm_dev_put(&fbkms->drm);
-    dev_info(&pdev->dev, "fbkms driver removed successfully\n");
+    pr_info("fbkms driver removed successfully\n");
     return 0;
 }
 
@@ -136,7 +136,7 @@ static struct platform_driver fbkms_platform_driver = {
 
 static int __init fbkms_init(void)
 {
-    dev_info(&pdev->dev, "fbkms loaded successfully\n");
+    pr_info("fbkms loaded successfully\n");
     return platform_driver_register(&fbkms_platform_driver);
 }
 
