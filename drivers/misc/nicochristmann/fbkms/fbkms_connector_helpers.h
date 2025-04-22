@@ -28,14 +28,12 @@ static int fbkms_get_modes_wrapper(struct drm_connector *connector)
     return fbkms_get_modes(connector, &fbkms_preferred_mode);
 }
 
-static const struct drm_connector_funcs fbkms_conn_funcs = {
+static const struct drm_connector_funcs fbkms_connector_funcs = {
+    .reset = drm_atomic_helper_connector_reset,
     .fill_modes = drm_helper_probe_single_connector_modes,
     .destroy = drm_connector_cleanup,
-};
-
-
-static const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
-    .get_modes = fbkms_get_modes_wrapper,
+    .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+    .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
 static const struct drm_connector_funcs fbkms_connector_funcs = {
