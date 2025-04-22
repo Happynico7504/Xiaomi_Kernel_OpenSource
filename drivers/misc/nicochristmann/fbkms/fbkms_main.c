@@ -89,7 +89,7 @@ static int fbkms_probe(struct platform_device *pdev)
 
     conn = &fbkms->pipe.connector;
     conn->funcs = &fbkms_connector_funcs;
-    drm_connector_helper_add(conn, &fbkms_connector_funcs);
+    drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
 
     conn->display_info.width_mm = 68;
     conn->display_info.height_mm = 122;
