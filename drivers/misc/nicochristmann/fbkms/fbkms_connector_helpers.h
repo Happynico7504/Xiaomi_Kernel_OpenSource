@@ -1,6 +1,7 @@
 #ifndef FBKMS_CONNECTOR_HELPERS_H
 #define FBKMS_CONNECTOR_HELPERS_H
 
+#include <drm/drm_atomic_helper.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_modes.h>
 
