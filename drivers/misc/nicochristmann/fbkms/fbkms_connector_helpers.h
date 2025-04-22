@@ -1,11 +1,6 @@
 #ifndef FBKMS_CONNECTOR_HELPERS_H
 #define FBKMS_CONNECTOR_HELPERS_H
 
-#include <drm/drmP.h>
-#include <drm/drm_fb_helper.h>
-#include <drm/drm_crtc_helper.h>
-#include <drm/drm_gem_cma_helper.h>
-#include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_modes.h>
 
