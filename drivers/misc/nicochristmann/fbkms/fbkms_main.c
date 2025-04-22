@@ -104,8 +104,6 @@ static int fbkms_probe(struct platform_device *pdev)
 
     drm_kms_helper_poll_init(&fbkms->drm);
 
-    drm_kms_helper_hotplug_event(&fbkms->drm);
-
     dev_info(&pdev->dev, "fbkms driver registered successfully\n");
     return 0;
 }
