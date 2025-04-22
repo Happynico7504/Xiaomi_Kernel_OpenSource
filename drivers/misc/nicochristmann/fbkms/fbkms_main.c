@@ -130,30 +130,21 @@ err_config:
 
 static int fbkms_remove(struct platform_device *pdev)
 {
+    struct fbkms_device *fbkms = platform_get_drvdata(pdev);
     pr_info("fbkms: remove called\n");
 
-    struct fbkms_device *fbkms = platform_get_drvdata(pdev);
-    if (!fbkms) {
-        pr_err("fbkms: no driver data found in remove\n");
-        return -EINVAL;
-    }
-
-    pr_info("fbkms: shutting down polling\n");
     drm_kms_helper_poll_fini(&fbkms->drm);
+    pr_info("fbkms: shutting down polling\n");
 
-    pr_info("fbkms: unregistering connector\n");
-    drm_connector_unregister(&fbkms->pipe.connector);
-
-    pr_info("fbkms: unregistering drm device\n");
     drm_dev_unregister(&fbkms->drm);
+    pr_info("fbkms: drm_dev_unregister done\n");
 
-    pr_info("fbkms: cleaning up mode config\n");
     drm_mode_config_cleanup(&fbkms->drm);
+    pr_info("fbkms: drm_mode_config_cleanup done\n");
 
-    pr_info("fbkms: putting drm device\n");
     drm_dev_put(&fbkms->drm);
+    pr_info("fbkms: drm_dev_put done\n");
 
-    pr_info("fbkms: driver removed successfully\n");
     return 0;
 }
 
