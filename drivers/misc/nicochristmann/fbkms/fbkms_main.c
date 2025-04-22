@@ -84,11 +84,6 @@ static int fbkms_probe(struct platform_device *pdev)
     }
     pr_info("fbkms: drm_dev_init successful\n");
 
-  if (!fbkms->drm) {
-      pr_err("fbkms: drm is NULL!\n");
-      return -EINVAL;
-  }
-
     if (!fbkms->drm.dev) {
       pr_err("fbkms: drm.dev is NULL!\n");
       return -EINVAL;
