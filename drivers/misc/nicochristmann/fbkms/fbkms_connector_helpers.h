@@ -37,10 +37,4 @@ static const struct drm_connector_funcs fbkms_connector_funcs = {
     .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
-static const struct drm_connector_funcs fbkms_connector_funcs = {
-    .fill_modes = drm_helper_probe_single_connector_modes,
-    .destroy = drm_connector_cleanup,
-
-};
-
 #endif // FBKMS_CONNECTOR_HELPERS_H
