@@ -101,11 +101,6 @@ static int fbkms_probe(struct platform_device *pdev)
     }
     pr_info("fbkms: display pipe init done\n");
 
-    conn = &fbkms->pipe.connector;
-    conn->funcs = &fbkms_connector_funcs;
-    drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
-    pr_info("fbkms: connector funcs and helper set\n");
-
     conn->display_info.width_mm = 68;
     conn->display_info.height_mm = 122;
     conn->polled = DRM_CONNECTOR_POLL_HPD;
