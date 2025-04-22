@@ -59,54 +59,79 @@ static int fbkms_probe(struct platform_device *pdev)
     struct drm_connector *conn;
     int ret;
 
+    pr_info("fbkms: probe started\n");
+
     fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
-    if (!fbkms)
+    if (!fbkms) {
+        dev_err(&pdev->dev, "fbkms: failed to allocate device struct\n");
         return -ENOMEM;
+    }
 
     fbkms->fb = registered_fb[0];
     if (!fbkms->fb || !fbkms->fb->screen_base) {
-        dev_err(&pdev->dev, "fb0 not available\n");
+        dev_err(&pdev->dev, "fbkms: fb0 not available or screen_base null\n");
         return -ENODEV;
     }
 
     platform_set_drvdata(pdev, fbkms);
+    pr_info("fbkms: platform data set\n");
 
     fbkms->drm.dev = &pdev->dev;
     ret = drm_dev_init(&fbkms->drm, &fbkms_driver, &pdev->dev);
-    if (ret)
+    if (ret) {
+        dev_err(&pdev->dev, "fbkms: drm_dev_init failed (%d)\n", ret);
         return ret;
+    }
+    pr_info("fbkms: drm_dev_init successful\n");
 
     drm_mode_config_init(&fbkms->drm);
+    pr_info("fbkms: drm_mode_config_init done\n");
+
     fbkms_setup_mode(fbkms);
+    pr_info("fbkms: mode setup done\n");
 
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                        &fbkms_pipe_funcs, fbkms_formats,
                                        ARRAY_SIZE(fbkms_formats),
                                        NULL,
                                        &fbkms->pipe.connector);
-    if (ret)
-        return ret;
+    if (ret) {
+        dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
+        goto err_config;
+    }
+    pr_info("fbkms: display pipe init done\n");
 
     conn = &fbkms->pipe.connector;
     conn->funcs = &fbkms_connector_funcs;
     drm_connector_helper_add(conn, &fbkms_conn_helper_funcs);
+    pr_info("fbkms: connector funcs and helper set\n");
 
     conn->display_info.width_mm = 68;
     conn->display_info.height_mm = 122;
     conn->polled = DRM_CONNECTOR_POLL_HPD;
 
     drm_mode_config_reset(&fbkms->drm);
+    pr_info("fbkms: mode config reset\n");
 
     ret = drm_dev_register(&fbkms->drm, 0);
-    if (ret)
-        return ret;
+    if (ret) {
+        dev_err(&pdev->dev, "fbkms: drm_dev_register failed (%d)\n", ret);
+        goto err_pipe;
+    }
+    pr_info("fbkms: drm_dev_register success\n");
 
     drm_kms_helper_poll_init(&fbkms->drm);
+    pr_info("fbkms: KMS poll init done\n");
 
     dev_info(&pdev->dev, "fbkms driver registered successfully\n");
     return 0;
-}
 
+err_pipe:
+    drm_mode_config_cleanup(&fbkms->drm);
+err_config:
+    drm_dev_put(&fbkms->drm);
+    return ret;
+}
 
 static int fbkms_remove(struct platform_device *pdev)
 {
