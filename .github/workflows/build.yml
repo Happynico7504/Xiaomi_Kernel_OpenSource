@@ -55,10 +55,8 @@ jobs:
           ccache.tar.gz.sha512
           buildcache/arch/arm64/boot/Image.gz
           buildcache/arch/arm64/boot/Image.gz.sha512
-          buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
           buildcache/System.map.sha512
-          clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz
           config.gz
           config.gz.sha512
           modules.tar.gz
