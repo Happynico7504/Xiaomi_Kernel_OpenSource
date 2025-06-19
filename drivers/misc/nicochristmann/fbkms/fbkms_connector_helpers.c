@@ -2,7 +2,7 @@
 #include <drm/drm_modes.h>
 #include <drm/drm_atomic_helper.h>
 #include "fbkms_connector_helpers.h"
-#include "fbkms_output_modes.h" // falls du dort preferred_mode hast
+#include "fbkms_output_modes.h"
 
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *preferred_mode)
 {
