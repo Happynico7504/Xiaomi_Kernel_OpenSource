@@ -1,3 +1,33 @@
+int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode);
+int fbkms_get_modes_wrapper(struct drm_connector *connector);
+
+void fbkms_setup_mode(struct fbkms_device *fbkms)
+{
+    fbkms->mode = fbkms_output_config;
+};
+
+int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
+{
+    pr_info("loading modes\n");
+
+    struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
+    if (!mode)
+        return 0;
+
+    mode->type |= DRM_MODE_TYPE_PREFERRED;
+    drm_mode_probed_add(connector, mode);
+
+    return 1;
+}
+
+int fbkms_get_modes_wrapper(struct drm_connector *connector)
+{
+    pr_info("prepare for mode loading\n");
+
+    struct drm_display_mode fbkms_output_config;
+    return fbkms_get_modes(connector, &fbkms_output_config);
+}
+
 const struct drm_connector_funcs fbkms_conn_funcs = {
     .fill_modes = drm_helper_probe_single_connector_modes,
     .destroy = drm_connector_cleanup,
@@ -162,35 +192,3 @@ static int fbkms_remove(struct platform_device *pdev)
 
     return 0;
 }
-
-int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode);
-int fbkms_get_modes_wrapper(struct drm_connector *connector);
-
-void fbkms_setup_mode(struct fbkms_device *fbkms)
-{
-    fbkms->mode = fbkms_output_config;
-};
-
-int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
-{
-    pr_info("loading modes\n");
-
-    struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
-    if (!mode)
-        return 0;
-
-    mode->type |= DRM_MODE_TYPE_PREFERRED;
-    drm_mode_probed_add(connector, mode);
-
-    return 1;
-}
-
-int fbkms_get_modes_wrapper(struct drm_connector *connector)
-{
-    pr_info("prepare for mode loading\n");
-
-    struct drm_display_mode fbkms_output_config;
-    return fbkms_get_modes(connector, &fbkms_output_config);
-}
-
-
