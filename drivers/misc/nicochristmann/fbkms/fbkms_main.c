@@ -65,7 +65,7 @@ static struct drm_driver fbkms_driver = {
     .driver_features = DRIVER_MODESET | DRIVER_GEM,
     .name = "fbkms",
     .desc = "Framebuffer KMS",
-    .date = "20250413",
+    .date = "20250619",
     .gem_free_object_unlocked = drm_gem_cma_free_object,
     .dumb_create = drm_gem_cma_dumb_create,
     .dumb_destroy = drm_gem_dumb_destroy,
@@ -118,7 +118,7 @@ static int fbkms_probe(struct platform_device *pdev)
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
                                    &fbkms_pipe_funcs, fbkms_formats,
                                    ARRAY_SIZE(fbkms_formats),
-                                   &fbkms_conn_funcs,
+                                   &fbkms_conn_helper_funcs,
                                    &fbkms->pipe.connector);
     
     if (ret) {
