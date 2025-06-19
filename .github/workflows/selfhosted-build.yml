@@ -10,6 +10,8 @@ jobs:
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
+        chmod 755 custom-scripts/prepare-dkms-base.sh
+        custom-scripts/prepare-dkms-base.sh
         wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
         unzip ice-s-oss.zip || true
         cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/mtkmods || true
@@ -47,3 +49,4 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
+          dkms-base.tar.gz
