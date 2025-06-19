@@ -10,11 +10,6 @@
 #include "fbkms_connector_helpers.h"
 #include "fbkms_types.h"
 
-void fbkms_setup_mode(struct fbkms_device *fbkms)
-{
-    fbkms->mode = fbkms_preferred_mode;
-}
-
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
                               struct drm_plane_state *plane_state)
