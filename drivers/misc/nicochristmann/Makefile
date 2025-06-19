@@ -1,5 +1,4 @@
-obj-$(CONFIG_NICOCHRISTMANN_MTKMODS)            += kernelmodules/
+obj-$(CONFIG_NICOCHRISTMANN_MTKMODS)            += mtkmods/
 obj-$(CONFIG_NICOCHRISTMANN_USBWIFI)            += usbwifi/
-obj-m                                           += fbflush/
-obj-m                                           += fbkms/
-obj-m                                           += fbkms_dev/
+obj-$(CONFIG_NICOCHRISTMANN_FBREFRESHTIMER)     += fbrefreshtimer/
+obj-$(CONFIG_NICOCHRISTMANN_FBKMS)              += fbkms/
