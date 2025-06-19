@@ -131,9 +131,6 @@ static int fbkms_probe(struct platform_device *pdev)
         conn->display_info.height_mm = 122;
         conn->polled = DRM_CONNECTOR_POLL_HPD;
 
-    drm_mode_config_reset(&fbkms->drm);
-    pr_info("fbkms: mode config reset\n");
-
     ret = drm_dev_register(&fbkms->drm, 0);
     if (ret) {
         dev_err(&pdev->dev, "fbkms: drm_dev_register failed (%d)\n", ret);
