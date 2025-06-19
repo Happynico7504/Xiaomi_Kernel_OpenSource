@@ -1,2 +1,4 @@
-source "drivers/misc/nicochristmann/kernelmodules/Kconfig"
+source "drivers/misc/nicochristmann/mtkmods/Kconfig"
 source "drivers/misc/nicochristmann/usbwifi/Kconfig"
+source "drivers/misc/nicochristmann/fbkms/Kconfig"
+source "drivers/misc/nicochristmann/fbrefreshtimer/Kconfig"
