@@ -8,6 +8,7 @@
 #include <drm/drm_simple_kms_helper.h>
 
 #include "fbkms_connector_helpers.h"
+#include "fbkms_output_modes.h"
 #include "fbkms_types.h"
 
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
