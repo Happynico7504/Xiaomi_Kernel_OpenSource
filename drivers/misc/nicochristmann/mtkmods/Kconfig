@@ -2,4 +2,4 @@ config NICOCHRISTMANN_MTKMODS
 
 tristate "Mediatek Kernel Modules"
 
-default m
+default n
