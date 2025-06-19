@@ -116,10 +116,11 @@ static int fbkms_probe(struct platform_device *pdev)
     pr_info("fbkms: mode setup done\n");
 
     ret = drm_simple_display_pipe_init(&fbkms->drm, &fbkms->pipe,
-                                       &fbkms_pipe_funcs, fbkms_formats,
-                                       ARRAY_SIZE(fbkms_formats),
-                                       NULL,
-                                       &fbkms->pipe.connector);
+                                   &fbkms_pipe_funcs, fbkms_types,
+                                   ARRAY_SIZE(fbkms_formats),
+                                   &fbkms_conn_funcs,
+                                   &fbkms->pipe.connector);
+    
     if (ret) {
         dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
         goto err_config;
