@@ -25,19 +25,3 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
     extern struct drm_display_mode fbkms_preferred_mode;
     return fbkms_get_modes(connector, &fbkms_preferred_mode);
 }
-
-const struct drm_connector_funcs fbkms_conn_funcs = {
-    .reset = drm_atomic_helper_connector_reset,
-    .fill_modes = drm_helper_probe_single_connector_modes,
-    .destroy = drm_connector_cleanup,
-    .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
-    .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
-
-EXPORT_SYMBOL(fbkms_conn_funcs);
-
-const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
-    .get_modes = fbkms_get_modes_wrapper,
-};
-
-EXPORT_SYMBOL(fbkms_conector_helper_funcs);
