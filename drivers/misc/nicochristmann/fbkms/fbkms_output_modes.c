@@ -20,4 +20,4 @@ void fbkms_setup_mode(struct fbkms_device *fbkms)
     fbkms->mode = fbkms_preferred_mode;
 };
 
-EXPORT_SYMBOL("fbkms_preferred_mode");
+EXPORT_SYMBOL("fbkms_setup_mode");
