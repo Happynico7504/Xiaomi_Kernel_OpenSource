@@ -81,14 +81,6 @@ static struct drm_driver fbkms_driver = {
     .dumb_destroy = drm_gem_dumb_destroy,
 };
 
-static struct platform_driver fbkms_platform_driver = {
-    .probe = fbkms_probe,
-    .remove = fbkms_remove,
-    .driver = {
-        .name = "fbkms",
-    },
-};
-
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
@@ -192,3 +184,11 @@ static int fbkms_remove(struct platform_device *pdev)
 
     return 0;
 }
+
+static struct platform_driver fbkms_platform_driver = {
+    .probe = fbkms_probe,
+    .remove = fbkms_remove,
+    .driver = {
+        .name = "fbkms",
+    },
+};
