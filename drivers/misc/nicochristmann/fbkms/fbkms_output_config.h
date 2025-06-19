@@ -1,11 +1,4 @@
-#ifndef FBKMS_OUTPUT_MODES_H
-#define FBKMS_OUTPUT_MODES_H
-
-#include "fbkms_types.h"
-
-#include <drm/drm_modes.h>
-
-struct drm_display_mode fbkms_preferred_mode = {
+struct drm_display_mode fbkms_output_config = {
     .clock = 71000,
     .hdisplay = 720,
     .vdisplay = 1600,
@@ -14,5 +7,3 @@ struct drm_display_mode fbkms_preferred_mode = {
     .type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
     .name = "720x1600"
 };
-
-#endif // FBKMS_OUTPUT_MODES_H
