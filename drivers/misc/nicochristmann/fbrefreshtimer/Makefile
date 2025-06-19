@@ -1,1 +1,1 @@
-obj-m += fbrefreshtimer.o
+obj-y += fbrefreshtimer.o
