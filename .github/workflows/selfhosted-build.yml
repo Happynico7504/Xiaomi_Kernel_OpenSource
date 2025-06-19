@@ -12,7 +12,7 @@ jobs:
     - run: |
         wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
         unzip ice-s-oss.zip || true
-        cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/kernelmodules || true
+        cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/mtkmods || true
         wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip 2> /dev/null || true
         unzip main.zip || true
         mkdir drivers/misc/nicochristmann/usbwifi/src || true
@@ -41,7 +41,6 @@ jobs:
         files: |
           buildcache/arch/arm64/boot/Image.gz
           buildcache/arch/arm64/boot/Image.gz.sha512
-          buildcache/kernel/kheaders_data.tar.xz
           buildcache/System.map
           buildcache/System.map.sha512
           config.gz
