@@ -61,3 +61,4 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
+          dkms-base.tar.gz
