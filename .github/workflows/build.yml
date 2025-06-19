@@ -10,6 +10,8 @@ jobs:
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
+        sudo chmod 755 custom-scripts/prepare-dkms-base.sh
+        sudo custom-scripts/prepare-dkms-base.sh
         sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz 2> /dev/null || true
         sudo tar -xf ccache.tar.gz || true
         sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
