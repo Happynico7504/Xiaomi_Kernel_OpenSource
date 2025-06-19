@@ -6,3 +6,4 @@
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_device.h>
+#include <drm/drm_modes.h>
