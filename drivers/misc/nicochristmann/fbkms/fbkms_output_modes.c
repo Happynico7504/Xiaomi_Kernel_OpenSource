@@ -12,3 +12,8 @@ struct drm_display_mode fbkms_preferred_mode = {
     .type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
     .name = "720x1600"
 };
+
+void fbkms_setup_mode(struct fbkms_device *fbkms)
+{
+    fbkms->mode = fbkms_preferred_mode;
+}
