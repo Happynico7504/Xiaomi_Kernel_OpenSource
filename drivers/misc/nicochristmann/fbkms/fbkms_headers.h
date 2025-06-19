@@ -7,3 +7,5 @@
 #include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_device.h>
 #include <drm/drm_modes.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_atomic_helper.h>
