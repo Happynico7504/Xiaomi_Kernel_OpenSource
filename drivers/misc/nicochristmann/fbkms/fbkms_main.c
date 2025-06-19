@@ -56,7 +56,6 @@ static struct drm_driver fbkms_driver = {
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
-    struct drm_connector *conn;
     int ret;
 
     pr_info("fbkms: probe started\n");
