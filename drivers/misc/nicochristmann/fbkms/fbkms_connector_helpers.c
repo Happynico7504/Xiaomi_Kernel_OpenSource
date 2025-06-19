@@ -34,6 +34,10 @@ const struct drm_connector_funcs fbkms_conn_funcs = {
     .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
+EXPORT_SYMBOL("fbkms_conn_funcs");
+
 const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
 };
+
+EXPORT_SYMBOL("fbkms_conector_helper_funcs");
