@@ -25,11 +25,11 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     return 1;
 }
 
+struct drm_display_mode fbkms_output_config;
+
 int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
     pr_info("prepare for mode loading\n");
-
-    struct drm_display_mode fbkms_output_config;
     return fbkms_get_modes(connector, &fbkms_output_config);
 }
 
@@ -148,6 +148,10 @@ static int fbkms_probe(struct platform_device *pdev)
     pr_info("fbkms: display pipe init done\n");
 
     struct drm_connector *conn = fbkms->pipe.connector;
+    if (!conn) {
+        dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
+        return -EINVAL;
+    }
         conn->display_info.width_mm = 68;
         conn->display_info.height_mm = 122;
         conn->polled = DRM_CONNECTOR_POLL_HPD;
