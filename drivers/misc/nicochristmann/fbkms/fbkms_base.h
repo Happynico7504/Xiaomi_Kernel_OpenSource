@@ -153,7 +153,7 @@ static int fbkms_probe(struct platform_device *pdev)
     pr_info("fbkms: display pipe init done\n");
 
     ret = drm_connector_init(&fbkms->drm, &fbkms->connector,
-                         &fbkms_conn_funcs, DRM_MODE_CONNECTOR_Unknown);
+                         &fbkms_conn_funcs, DRM_MODE_CONNECTOR_RedmiLCD);
     if (ret) {
         dev_err(&pdev->dev, "failed to init connector (%d)\n", ret);
         goto err_pipe;
@@ -171,7 +171,7 @@ static int fbkms_probe(struct platform_device *pdev)
     }
         conn->display_info.width_mm = 68;
         conn->display_info.height_mm = 122;
-        conn->polled = DRM_CONNECTOR_POLL_HPD;
+        conn->polled = DRM_CONNECTOR_POLL_CONNECT;
 
     
     ret = drm_dev_register(&fbkms->drm, 0);
