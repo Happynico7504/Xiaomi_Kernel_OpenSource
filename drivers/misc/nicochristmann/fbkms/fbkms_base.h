@@ -8,6 +8,11 @@ void fbkms_setup_mode(struct fbkms_device *fbkms)
 
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
 {
+    if (!connector || !preferred_mode) {
+    pr_err("fbkms_get_modes: invalid arguments\n");
+    return 0;
+    }
+    
     pr_info("loading modes\n");
 
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
