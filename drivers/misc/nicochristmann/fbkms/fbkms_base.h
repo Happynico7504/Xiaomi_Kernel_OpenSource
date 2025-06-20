@@ -24,7 +24,7 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
     pr_info("prepare for mode loading\n");
 
-    struct drm_display_mode fbkms_output_config;
+    extern struct drm_display_mode fbkms_output_config;
     return fbkms_get_modes(connector, &fbkms_output_config);
 }
 
