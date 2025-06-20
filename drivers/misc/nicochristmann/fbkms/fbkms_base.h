@@ -153,13 +153,10 @@ static int fbkms_probe(struct platform_device *pdev)
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
-    ret = drm_simple_display_pipe_connector_attach(&fbkms->pipe, &fbkms->connector);
-    if (ret) {
-        dev_err(&pdev->dev, "failed to attach connector (%d)\n", ret);
-        goto err_pipe;
-    }
+    fbkms->connector.dpms = DRM_MODE_DPMS_ON;
+    fbkms->pipe.connector = &fbkms->connector;
 
-    struct drm_connector *conn = &fbkms->connector;
+    struct drm_connector *conn = &fbkms->pipe.connector;
     if (!conn) {
         dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
         return -EINVAL;
