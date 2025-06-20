@@ -43,7 +43,7 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_plane_state *plane_state)
 {
   
-    struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, pipe);
+    struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
 
     struct drm_framebuffer *fb = plane_state->fb;
 
