@@ -18,7 +18,7 @@ static int __init fbflush_init(void)
 {
     pr_info("fbflush: scheduling display refresh work\n");
     INIT_DELAYED_WORK(&fbflush_work, fbflush_work_func);
-    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(5000));
+    schedule_delayed_work(&fbflush_work, msecs_to_jiffies(5));
     return 0;
 }
 
