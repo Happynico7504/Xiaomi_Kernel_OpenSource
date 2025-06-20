@@ -159,7 +159,7 @@ static int fbkms_probe(struct platform_device *pdev)
         goto err_pipe;
     }
 
-    struct drm_connector *conn = fbkms->connector;
+    struct drm_connector *conn = &fbkms->connector;
     if (!conn) {
         dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
         return -EINVAL;
