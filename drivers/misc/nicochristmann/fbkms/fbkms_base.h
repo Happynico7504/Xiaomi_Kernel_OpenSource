@@ -137,7 +137,6 @@ static int fbkms_probe(struct platform_device *pdev)
         fbkms_formats, ARRAY_SIZE(fbkms_formats),
         NULL,
         NULL);
-
     
     if (ret) {
         dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
@@ -145,7 +144,22 @@ static int fbkms_probe(struct platform_device *pdev)
     }
     pr_info("fbkms: display pipe init done\n");
 
-    struct drm_connector *conn = fbkms->pipe.connector;
+    ret = drm_connector_init(&fbkms->drm, &fbkms->connector,
+                         &fbkms_conn_funcs, DRM_MODE_CONNECTOR_Unknown);
+    if (ret) {
+        dev_err(&pdev->dev, "failed to init connector (%d)\n", ret);
+        goto err_pipe;
+    }
+
+    drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
+
+    ret = drm_simple_display_pipe_connector_attach(&fbkms->pipe, &fbkms->connector);
+    if (ret) {
+        dev_err(&pdev->dev, "failed to attach connector (%d)\n", ret);
+        goto err_pipe;
+    }
+
+    struct drm_connector *conn = fbkms->connector;
     if (!conn) {
         dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
         return -EINVAL;
