@@ -24,7 +24,7 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 {
     pr_info("prepare for mode loading\n");
 
-    struct drm_display_mode fbkms_output_config;
+    extern struct drm_display_mode fbkms_output_config;
     return fbkms_get_modes(connector, &fbkms_output_config);
 }
 
@@ -125,12 +125,14 @@ static int fbkms_probe(struct platform_device *pdev)
     fbkms_setup_mode(fbkms);
     pr_info("fbkms: mode setup done\n");
 
+    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
+
     ret = drm_simple_display_pipe_init(&fbkms->drm,
         &fbkms->pipe,
         &fbkms_pipe_funcs,
         fbkms_formats, ARRAY_SIZE(fbkms_formats),
         &fbkms_conn_funcs,
-        &fbkms_conn_helper_funcs);
+        NULL);
 
     
     if (ret) {
