@@ -1,4 +1,4 @@
-config NICOCHRISTMANN_FBREFRESH
+config NICOCHRISTMANN_FBREFRESHTIMER
 
 tristate "Timer Based Framebuffer Refresh"
 
