@@ -31,8 +31,16 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
     return fbkms_get_modes(connector, &fbkms_output_config);
 }
 
+static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
+{
+    pr_info("fbkms_detect called\n");
+    return connector_status_connected;
+}
+
+
 const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
+    .detect = fbkms_detect,
     .fill_modes = drm_helper_probe_single_connector_modes,
     .destroy = drm_connector_cleanup,
     .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
