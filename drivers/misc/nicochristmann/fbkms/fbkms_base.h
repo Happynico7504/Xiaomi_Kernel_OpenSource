@@ -156,7 +156,7 @@ static int fbkms_probe(struct platform_device *pdev)
     fbkms->connector.dpms = DRM_MODE_DPMS_ON;
     fbkms->pipe.connector = &fbkms->connector;
 
-    struct drm_connector *conn = &fbkms->pipe.connector;
+    struct drm_connector *conn = fbkms->pipe.connector;
     if (!conn) {
         dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
         return -EINVAL;
