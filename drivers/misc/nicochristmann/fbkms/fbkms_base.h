@@ -145,13 +145,13 @@ static int fbkms_probe(struct platform_device *pdev)
     }
     pr_info("fbkms: display pipe init done\n");
 
-    ret = drm_connector_init(&fbkms->drm, &fbkms->connector, &fbkms_conn_funcs, DRM_MODE_CONNECTOR_DSI);
+    ret = drm_connector_init(&fbkms->drm, &fbkms->pipe.connector, &fbkms_conn_funcs, DRM_MODE_CONNECTOR_DSI);
         if (ret) {
         dev_err(&pdev->dev, "failed to init connector\n");
         return ret;
     }
-    drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
-    drm_simple_display_pipe_connector_attach(&fbkms->pipe, &fbkms->connector);
+    drm_connector_helper_add(&fbkms->pipe.connector, &fbkms_conn_helper_funcs);
+    drm_simple_display_pipe_connector_attach(&fbkms->pipe, &fbkms->pipe.connector);
 
 
     struct drm_connector *conn = fbkms->pipe.connector;
