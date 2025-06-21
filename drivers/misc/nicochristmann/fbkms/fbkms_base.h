@@ -9,7 +9,7 @@ void fbkms_setup_mode(struct fbkms_device *fbkms)
 
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
 {
-    if (!connector || !output_mode) {
+    if (!connector  || !output_mode) {
     pr_err("fbkms_get_modes: invalid arguments\n");
     return 0;
     }
@@ -35,6 +35,11 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
 {
     pr_info("fbkms_detect called\n");
+    if (!connector || !connector->dev) {
+        pr_err("invalid connector or missing device\n");
+        return 0;
+    }
+
     return connector_status_connected;
 }
 
