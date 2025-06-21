@@ -33,10 +33,17 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     if (!mode) {
         pr_err("mode duplication failed\n");
         return 0;
+    }
 
+    pr_info("about to set mode type flags\n");
     mode->type |= DRM_MODE_TYPE_PREFERRED;
-    drm_mode_probed_add(connector, mode);
+    pr_info("mode type set, type now: 0x%x\n", mode->type);
 
+    pr_info("about to call drm_mode_probed_add\n");
+    drm_mode_probed_add(connector, mode);
+    pr_info("mode successfully added to connector\n");
+
+        
     return 1;
 }
 
