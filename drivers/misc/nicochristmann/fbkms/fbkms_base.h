@@ -9,8 +9,18 @@ void fbkms_setup_mode(struct fbkms_device *fbkms)
 
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
 {
-    if (!connector  || !output_mode) {
-    pr_err("fbkms_get_modes: invalid arguments\n");
+    if (!connector) {
+    pr_err("fbkms_get_modes: NULL connector!\n");
+    return 0;
+    }
+
+    if (!connector->dev) {
+    pr_err("fbkms_get_modes: NULL connector dev!\n");
+    return 0;
+    }
+
+    if (!output_mode) {
+    pr_err("fbkms_get_modes: NULL mode!\n");
     return 0;
     }
     
