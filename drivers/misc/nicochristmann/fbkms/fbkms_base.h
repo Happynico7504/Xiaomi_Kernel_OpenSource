@@ -163,16 +163,16 @@ static int fbkms_probe(struct platform_device *pdev)
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
     fbkms->connector.dpms = DRM_MODE_DPMS_ON;
-    fbkms->pipe.connector = &fbkms->connector;
 
-    struct drm_connector *conn = fbkms->pipe.connector;
+    struct drm_connector *conn = fbkms->connector;
     if (!conn) {
-        dev_err(&pdev->dev, "fbkms: pipe.connector is NULL!\n");
+        dev_err(&pdev->dev, "fbkms: connector is NULL!\n");
         return -EINVAL;
-    }
+        
         conn->display_info.width_mm = 68;
         conn->display_info.height_mm = 122;
         conn->polled = DRM_CONNECTOR_POLL_CONNECT;
+    }
 
     
     ret = drm_dev_register(&fbkms->drm, 0);
