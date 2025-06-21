@@ -139,11 +139,22 @@ static int fbkms_probe(struct platform_device *pdev)
         return -ENOMEM;
     }
 
-    fbkms->fb = registered_fb[0];
-    if (!fbkms->fb || !fbkms->fb->screen_base) {
-        dev_err(&pdev->dev, "fbkms: fb0 not available or screen_base null\n");
-        return -ENODEV;
+    struct fb_info *info = NULL;
+
+    for (int i = 0; i < FB_MAX; i++) {
+        if (registered_fb[i] && registered_fb[i]->screen_base) {
+            info = registered_fb[i];
+            break;
+        }
     }
+
+if (!info) {
+    dev_err(&pdev->dev, "fbkms: no valid fb device found\n");
+    return -ENODEV;
+}
+
+fbkms->fb = info;
+
 
     platform_set_drvdata(pdev, fbkms);
     pr_info("fbkms: platform data set\n");
@@ -198,11 +209,10 @@ static int fbkms_probe(struct platform_device *pdev)
     if (!conn) {
         dev_err(&pdev->dev, "fbkms: connector is NULL!\n");
         return -EINVAL;
-        
+    }
         conn->display_info.width_mm = 68;
         conn->display_info.height_mm = 122;
         conn->polled = DRM_CONNECTOR_POLL_CONNECT;
-    }
 
     
     ret = drm_dev_register(&fbkms->drm, 0);
