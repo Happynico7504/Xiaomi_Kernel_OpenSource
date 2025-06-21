@@ -3,9 +3,9 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector);
 
 void fbkms_setup_mode(struct fbkms_device *fbkms)
 {
+    drm_mode_set_name(&fbkms_output_config);
     fbkms->mode = fbkms_output_config;
-    drm_mode_set_name(&fbkms->mode);
-};
+    };
 
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
 {
