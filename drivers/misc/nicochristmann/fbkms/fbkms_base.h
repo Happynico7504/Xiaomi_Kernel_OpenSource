@@ -26,6 +26,8 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     
     pr_info("loading modes\n");
 
+    pr_info("output_mode name: %s\n", output_mode->name);
+
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
     if (!mode)
         return 0;
