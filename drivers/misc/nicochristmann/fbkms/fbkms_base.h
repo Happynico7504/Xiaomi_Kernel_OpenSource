@@ -25,8 +25,6 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     
     pr_info("loading modes\n");
 
-    pr_info("output_mode name: %s\n", output_mode->name);
-
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
     if (!mode) {
         pr_err("mode duplication failed\n");
@@ -35,6 +33,8 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
 
     drm_mode_set_name(mode);
 
+    pr_info("output_mode name: %s\n", output_mode->name);
+    
     pr_info("about to set mode type flags\n");
     mode->type |= DRM_MODE_TYPE_PREFERRED;
     pr_info("mode type set, type now: 0x%x\n", mode->type);
