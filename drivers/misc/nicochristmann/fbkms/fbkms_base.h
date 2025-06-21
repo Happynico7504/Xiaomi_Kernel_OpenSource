@@ -30,7 +30,8 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     pr_info("output_mode name: %s\n", output_mode->name);
 
     struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
-    if (!mode)
+    if (!mode) {
+        pr_err("mode duplication failed\n");
         return 0;
 
     mode->type |= DRM_MODE_TYPE_PREFERRED;
@@ -48,8 +49,12 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
 {
     pr_info("fbkms_detect called\n");
-    if (!connector || !connector->dev) {
-        pr_err("invalid connector or missing device\n");
+    if (!connector) {
+        pr_err("invalid connector\n");
+        return 0;
+    }
+    if (!connector->dev) {
+        pr_err("missing device\n");
         return 0;
     }
 
