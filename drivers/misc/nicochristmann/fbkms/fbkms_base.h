@@ -33,6 +33,8 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
 
     drm_mode_set_name(mode);
 
+    drm_mode_debug_printmodeline(mode);
+
     pr_info("output_mode name: %s\n", output_mode->name);
     
     pr_info("about to set mode type flags\n");
