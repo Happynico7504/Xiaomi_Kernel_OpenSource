@@ -11,7 +11,6 @@ jobs:
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
         sudo chmod 755 custom-scripts/prepare-dkms-base.sh
-        sudo custom-scripts/prepare-dkms-base.sh
         sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz 2> /dev/null || true
         sudo tar -xf ccache.tar.gz || true
         sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
@@ -30,13 +29,14 @@ jobs:
         sudo chmod 755 custom-scripts/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++
         sudo ls clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
         nproc
-    - run: "sudo USE_CCACHE=1 CCACHE_DIR=/home/runner/work/Xiaomi_Kernel_OpenSource/Xiaomi_Kernel_OpenSource/ccache PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH KBUILD_OUTPUT=buildcache COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j$(($(nproc) * 4)) || true"
+    - run: "sudo USE_CCACHE=1 CCACHE_DIR=/home/runner/work/Xiaomi_Kernel_OpenSource/Xiaomi_Kernel_OpenSource/ccache PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j$(($(nproc) * 4)) || true"
     - run: "sudo cp $(sudo find -iname *.ko) modules || true"
     - run: "sudo tar -c modules | gzip -9 > modules.tar.gz || true"
     - run: "sudo cat buildcache/.config | gzip -9 > config.gz || true"
     - run: "sudo rm ccache.tar.gz || true"
     - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
     - run: |
+        sudo custom-scripts/prepare-dkms-base.sh
         sha512sum buildcache/arch/arm64/boot/Image.gz | sudo tee buildcache/arch/arm64/boot/Image.gz.sha512 || true
         sha512sum buildcache/System.map > buildcache/System.map.sha512 || true
         sha512sum config.gz > config.gz.sha512 || true
