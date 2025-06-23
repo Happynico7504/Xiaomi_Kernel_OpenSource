@@ -63,4 +63,14 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
+
+    - run: "sudo custom-scripts/prepare-dkms-base.sh"
+
+    - uses: "marvinpinto/action-automatic-releases@latest"
+      with:
+        repo_token: "${{ secrets.GITHUB_TOKEN }}"
+        automatic_release_tag: "dkms-files"
+        prerelease: true
+        title: "DKMS Files ${{ env.SHORT_SHA }}"
+        files: |
           dkms-base.tar.gz
