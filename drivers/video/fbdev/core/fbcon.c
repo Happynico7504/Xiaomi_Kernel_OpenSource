@@ -342,15 +342,6 @@ static int get_color(struct vc_data *vc, struct fb_info *info,
 		color &= 7;
 		break;
 	}
-
-	if (info &&
-	    info->var.bits_per_pixel == 32 &&
-	    info->var.transp.length == 8 &&
-	    info->var.transp.offset >= 24 &&
-	    info->var.transp.offset + info->var.transp.length <= 32) {
-		color |= 0xFF000000;
-	}
-
 	return color;
 }
 
