@@ -154,14 +154,6 @@ static void bit_putcs(struct vc_data *vc, struct fb_info *info,
 	u32 attribute = get_attribute(info, scr_readw(s));
 	u8 *dst, *buf = NULL;
 
-	/* Patch: Sichtbares Alpha setzen bei ARGB8888 */
-	if (info->var.bits_per_pixel == 32 &&
-	    info->var.transp.offset == 24 &&
-	    info->var.transp.length == 8) {
-		fg |= 0xFF000000;
-		bg |= 0xFF000000;
-	}
-
 	image.fg_color = fg;
 	image.bg_color = bg;
 	image.dx = xx * vc->vc_font.width;
