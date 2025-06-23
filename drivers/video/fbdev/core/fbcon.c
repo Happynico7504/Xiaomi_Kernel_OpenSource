@@ -342,9 +342,6 @@ static int get_color(struct vc_data *vc, struct fb_info *info,
 		color &= 7;
 		break;
 	}
-
-	color |= 0xFF000000;
-
 	return color;
 }
 
