@@ -38,7 +38,7 @@ jobs:
     - run: "sudo rm ccache.tar.gz || true"
     - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
     - run: |
-        sudo custom-scripts/prepare-dkms-base.sh
+        echo sudo custom-scripts/prepare-dkms-base.sh
         sudo sha512sum build-out/arch/arm64/boot/Image.gz | sudo tee build-out/arch/arm64/boot/Image.gz.sha512 || true
         sudo sha512sum build-out/System.map > build-out/System.map.sha512 || true
         sudo sha512sum config.gz > config.gz.sha512 || true
