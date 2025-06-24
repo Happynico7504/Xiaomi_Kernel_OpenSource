@@ -43,7 +43,7 @@ jobs:
         sudo sha512sum config.gz > config.gz.sha512 || true
         sudo sha512sum modules.tar.gz > modules.tar.gz.sha512 || true
         sudo sha512sum ccache.tar.gz > ccache.tar.gz.sha512 || true
-    - run: "[ ! -s System.map.sha512 ] && sudo rm System.map.sha512 || true"
+    - run: "[ ! -s build-out/System.map.sha512 ] && sudo rm build-out/System.map.sha512 || true"
     - run: "[ ! -s build-out/arch/arm64/boot/Image.gz.sha512 ] && sudo rm build-out/arch/arm64/boot/Image.gz.sha512 || true"
     - uses: "marvinpinto/action-automatic-releases@latest"
       with:
