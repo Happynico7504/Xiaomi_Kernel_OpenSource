@@ -6,8 +6,6 @@
 #ifndef __MTK_DSI_H
 #define __MTK_DSI_H
 
-#ifdef CONFIG_MTK_MT6382_BDG
-
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc_helper.h>
@@ -109,10 +107,8 @@ struct mtk_dsi {
 	unsigned int hsa_byte;
 	unsigned int hbp_byte;
 	unsigned int hfp_byte;
-#ifdef CONFIG_MTK_MT6382_BDG
 	/* for 6382 mipi hopping */
 	bool bdg_mipi_hopping_sta;
-#endif
 	bool mipi_hopping_sta;
 	bool panel_osc_hopping_sta;
 	unsigned int data_phy_cycle;
@@ -135,5 +131,5 @@ void mtk_output_bdg_enable(struct mtk_dsi *dsi, int force_lcm_update);
 unsigned int _dsi_get_pcw(unsigned long data_rate,
 	unsigned int pcw_ratio);
 
-#endif
+
 #endif
