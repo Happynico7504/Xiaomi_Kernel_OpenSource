@@ -659,7 +659,7 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 	input->src_fmt = DISP_FORMAT_RGBA8888;
 	session_input->config[1].next_buff_idx = -1;
 	session_input->config[1].layer_enable = 1;
-        session_input->config_layer_num++;
+        session_input->config_layer_num = 99;
 	ret = primary_display_config_input_multiple(session_input);
 	ret = primary_display_trigger(TRUE, NULL, 0);
 
