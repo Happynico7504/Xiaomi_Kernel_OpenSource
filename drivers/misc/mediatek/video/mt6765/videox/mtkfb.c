@@ -472,6 +472,10 @@ static int _convert_fb_layer_to_disp_input(struct fb_overlay_layer *src,
 		dst->src_fmt = DISP_FORMAT_ARGB8888;
 		break;
 
+	case MTK_FB_FORMAT_RGBA8888:
+		dst->src_fmt = DISP_FORMAT_RGBA8888;
+		break;
+
 	case MTK_FB_FORMAT_ABGR8888:
 		dst->src_fmt = DISP_FORMAT_ABGR8888;
 		break;
@@ -629,7 +633,7 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 		break;
 	case 32:
 		if (var->red.offset == 0 && var->green.offset == 8 && var->blue.offset == 16 && var->transp.offset == 24)
-                     fb_layer.src_fmt = MTK_FB_FORMAT_RGBA8888;  // Falls definiert
+                     fb_layer.src_fmt = MTK_FB_FORMAT_RGBA8888;
                 else if (var->blue.offset == 0)
                     fb_layer.src_fmt = MTK_FB_FORMAT_ARGB8888;
                 else
