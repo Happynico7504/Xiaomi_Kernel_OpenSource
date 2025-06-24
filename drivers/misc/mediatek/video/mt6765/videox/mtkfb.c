@@ -628,9 +628,12 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 		input->src_fmt = DISP_FORMAT_RGB888;
 		break;
 	case 32:
-		input->src_fmt =
-			(var->blue.offset == 0) ?
-			DISP_FORMAT_BGRA8888 : DISP_FORMAT_RGBX8888;
+		if (var->red.offset == 0 && var->green.offset == 8 && var->blue.offset == 16 && var->transp.offset == 24)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_RGBA8888;
+                else if (var->blue.offset == 0)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_ARGB8888;
+                else
+                    fb_layer.src_fmt = MTK_FB_FORMAT_BGRA8888;
 		break;
 	default:
 		DISPWARN("Invalid color format bpp: %d\n", var->bits_per_pixel);
