@@ -878,9 +878,12 @@ static int mtkfb_set_par(struct fb_info *fbi)
 	case 32:
 		fb_layer.src_use_color_key = 0;
 		DISPDBG("set_par,var->blue.offset=%d\n", var->blue.offset);
-		fb_layer.src_fmt = (var->blue.offset == 0) ?
-		    MTK_FB_FORMAT_ARGB8888 : MTK_FB_FORMAT_BGRA8888;
-		fb_layer.src_color_key = 0;
+		if (var->red.offset == 0 && var->green.offset == 8 && var->blue.offset == 16 && var->transp.offset == 24)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_RGBA8888;
+                else if (var->blue.offset == 0)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_ARGB8888;
+                else
+                    fb_layer.src_fmt = MTK_FB_FORMAT_BGRA8888;
 		break;
 
 	default:
