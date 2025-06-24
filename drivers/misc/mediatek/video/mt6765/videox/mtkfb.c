@@ -654,8 +654,9 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 	session_input->setter = SESSION_USER_PANDISP;
 
 	// make font visible
-	session_input->config[1].layer_id =
+	session_input->config[1].layer_id = 99
 	primary_display_get_option("ASSERT_LAYER");
+	session_input->src_fmt = DISP_FORMAT_RGBA8888;
 	session_input->config[1].next_buff_idx = -1;
 	session_input->config[1].layer_enable = 1;
         session_input->config_layer_num++;
