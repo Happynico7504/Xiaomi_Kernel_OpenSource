@@ -48,11 +48,9 @@
 
 #include <asm/arch_timer.h>
 /* ********** bridge ic ***************** */
-#ifdef CONFIG_MTK_MT6382_BDG
 #include "mtk_disp_bdg.h"
 #include "mtk_dsi.h"
 #include "mtk_reg_disp_bdg.h"
-#endif
 /* ************end bridge ic ************* */
 
 #define DSI_START 0x00
