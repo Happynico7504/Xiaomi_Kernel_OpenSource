@@ -484,11 +484,10 @@ void mtk_rdma_cal_golden_setting(struct mtk_ddp_comp *comp,
 #else
 	unsigned int fifo_size = 2240;
 #endif
-#if defined(CONFIG_MACH_MT6885) || defined(CONFIG_MACH_MT6893)
+
 	unsigned int pre_ultra_low_us = 245, pre_ultra_high_us = 255;
 	unsigned int ultra_low_us = 230, ultra_high_us = 245;
 	unsigned int urgent_low_us = 113, urgent_high_us = 117;
-#endif
 #if defined(CONFIG_MACH_MT6873) || defined(CONFIG_MACH_MT6853) \
 	|| defined(CONFIG_MACH_MT6833) || defined(CONFIG_MACH_MT6877) \
 	|| defined(CONFIG_MACH_MT6781)
