@@ -2103,7 +2103,6 @@ static void mtk_output_en_doze_switch(struct mtk_dsi *dsi)
 	dsi->doze_enabled = doze_enabled;
 }
 
-#ifdef CONFIG_MTK_MT6382_BDG
 void DSI_MIPI_deskew(struct mtk_dsi *dsi)
 {
 	unsigned int timeout = 0;
@@ -2646,7 +2645,6 @@ done:
 			(ext->params->dyn.data_rate << 16) |
 			ext->params->dyn.pll_clk);
 }
-#endif
 
 static int mtk_preconfig_dsi_enable(struct mtk_dsi *dsi)
 {
