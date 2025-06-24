@@ -1294,13 +1294,8 @@ static void mtk_dsi_ps_control_vact(struct mtk_dsi *dsi)
 	val = (val & ~mask) | (value & mask);
 	writel(val, dsi->regs + DSI_PSCTRL);
 
-#if !defined(CONFIG_MACH_MT6885) && !defined(CONFIG_MACH_MT6873) \
-	&& !defined(CONFIG_MACH_MT6893) && !defined(CONFIG_MACH_MT6853) \
-	&& !defined(CONFIG_MACH_MT6833) && !defined(CONFIG_MACH_MT6877) \
-	&& !defined(CONFIG_MACH_MT6781)
 	val = vm->hactive * dsi_buf_bpp;
 	writel(val, dsi->regs + DSI_HSTX_CKL_WC);
-#endif
 
 	writel(size, dsi->regs + DSI_SIZE_CON);
 }
