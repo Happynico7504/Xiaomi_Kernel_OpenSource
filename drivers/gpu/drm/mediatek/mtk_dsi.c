@@ -1379,7 +1379,6 @@ static void mtk_dsi_calc_vdo_timing(struct mtk_dsi *dsi)
 	dsi->hsa_byte = horizontal_sync_active_byte;
 }
 
-#ifdef CONFIG_MTK_MT6382_BDG
 void DSI_Config_VDO_Timing_with_DSC(struct mtk_dsi *dsi)
 {
 	unsigned int dsiTmpBufBpp;
@@ -1494,7 +1493,6 @@ void DSI_Config_VDO_Timing_with_DSC(struct mtk_dsi *dsi)
 	writel(ALIGN_TO((t_hfp), 4), dsi->regs + DSI_HFP_WC);
 	writel(ALIGN_TO((t_hbllp), 4), dsi->regs + DSI_BLLP_WC);
 	}
-#endif
 
 
 static void mtk_dsi_config_vdo_timing(struct mtk_dsi *dsi)
