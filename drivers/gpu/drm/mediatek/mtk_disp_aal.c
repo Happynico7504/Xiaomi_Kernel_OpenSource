@@ -42,6 +42,8 @@
 #define MT65XX_LED_MODE_CUST_LCM (4)
 #endif
 
+#define CONFIG_MTK_DRE30_SUPPORT
+
 #include "mtk_drm_crtc.h"
 #include "mtk_drm_ddp_comp.h"
 #include "mtk_drm_drv.h"
