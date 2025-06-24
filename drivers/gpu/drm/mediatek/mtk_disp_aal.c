@@ -1231,8 +1231,6 @@ static int disp_aal_write_dre_to_reg(struct mtk_ddp_comp *comp,
 
 	return 0;
 }
-
-)
 static int disp_aal_write_cabc_to_reg(struct mtk_ddp_comp *comp,
 	struct cmdq_pkt *handle, const struct DISP_AAL_PARAM *param)
 {
@@ -1963,7 +1961,6 @@ static void disp_aal_dre3_init(struct mtk_ddp_comp *comp)
 	ddp_aal_dre3_write_curve_full(comp);
 	spin_unlock_irqrestore(&g_aal_dre3_gain_lock, flags);
 }
-#else
 static void disp_aal_single_pipe_hist_update(struct mtk_ddp_comp *comp)
 {
 	unsigned int intsta;
@@ -2103,7 +2100,6 @@ static void mtk_aal_stop(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle)
 static void mtk_aal_bypass(struct mtk_ddp_comp *comp, int bypass,
 	struct cmdq_pkt *handle)
 {
-#if 1
 	if (atomic_read(&g_aal_force_relay) != bypass) {
 		AALFLOW_LOG("\n");
 		cmdq_pkt_write(handle, comp->cmdq_base, comp->regs_pa + DISP_AAL_CFG,
@@ -2119,9 +2115,6 @@ static void mtk_aal_bypass(struct mtk_ddp_comp *comp, int bypass,
 		}
 		atomic_set(&g_aal_force_relay, bypass);
 	}
-#else
-	AALFLOW_LOG("is ignored\n");
-#endif
 }
 
 static int mtk_aal_user_cmd(struct mtk_ddp_comp *comp, struct cmdq_pkt *handle,
