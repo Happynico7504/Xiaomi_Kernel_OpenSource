@@ -117,14 +117,14 @@ static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
 };
 
 static const uint32_t fbkms_formats[] = {
-    DRM_FORMAT_XRGB8888,
+    DRM_FORMAT_RGBA8888,
 };
 
 static struct drm_driver fbkms_driver = {
     .driver_features = DRIVER_MODESET | DRIVER_GEM,
     .name = "fbkms",
     .desc = "Framebuffer KMS",
-    .date = "20250619",
+    .date = "20250625",
     .gem_free_object_unlocked = drm_gem_cma_free_object,
     .dumb_create = drm_gem_cma_dumb_create,
     .dumb_destroy = drm_gem_dumb_destroy,
@@ -207,7 +207,7 @@ fbkms->fb = info;
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
-    ret = drm_encoder_init(fbkms->drm, &fbkms->encoder, &fbkms_encoder_funcs, DRM_MODE_ENCODER_NONE);
+    ret = drm_encoder_init(fbkms->drm, &fbkms->encoder, &fbkms_encoder_funcs, DRM_MODE_ENCODER_NONE, "dummy encoder");
     if (ret) {
         drm_connector_cleanup(&fbkms->connector);
         return ret;
