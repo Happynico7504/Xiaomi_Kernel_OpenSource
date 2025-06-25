@@ -56,17 +56,6 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 }
 
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
-{
-    pr_info("fbkms_detect called\n");
-    if (!connector) {
-        pr_err("invalid connector\n");
-        return 0;
-    }
-    if (!connector->dev) {
-        pr_err("missing device\n");
-        return 0;
-    }
-
     return connector_status_connected;
 }
 
