@@ -14,4 +14,5 @@ struct drm_display_mode fbkms_output_config = {
     .vrefresh = 60,
     .flags = DRM_MODE_FLAG_NHSYNC | DRM_MODE_FLAG_NVSYNC,
     .type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED,
+    .name = "720x1600"
 };
