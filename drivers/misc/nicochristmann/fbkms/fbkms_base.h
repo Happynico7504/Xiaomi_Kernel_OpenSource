@@ -41,7 +41,7 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     mode->type |= DRM_MODE_TYPE_PREFERRED;
     pr_info("mode type set, type now: 0x%x\n", mode->type);
 
-    pr_info("about to call drm_mode_probed_add\n");
+    pr_info("adding mode to connector\n");
     drm_mode_probed_add(connector, mode);
     pr_info("mode successfully added to connector\n");
 
@@ -73,7 +73,6 @@ static enum drm_connector_status fbkms_detect(struct drm_connector *connector, b
 
 const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
-    .detect = fbkms_detect,
     .fill_modes = drm_helper_probe_single_connector_modes,
     .destroy = drm_connector_cleanup,
     .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
@@ -82,6 +81,7 @@ const struct drm_connector_funcs fbkms_conn_funcs = {
 
 const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
+    .detect = fbkms_detect,
 };
 
 
