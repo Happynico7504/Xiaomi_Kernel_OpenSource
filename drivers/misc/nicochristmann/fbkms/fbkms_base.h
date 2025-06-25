@@ -74,6 +74,7 @@ static enum drm_connector_status fbkms_detect(struct drm_connector *connector, b
 const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
     .fill_modes = drm_helper_probe_single_connector_modes,
+    .detect = fbkms_detect,
     .destroy = drm_connector_cleanup,
     .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
     .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
@@ -81,7 +82,6 @@ const struct drm_connector_funcs fbkms_conn_funcs = {
 
 const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
-    .detect = fbkms_detect,
 };
 
 
