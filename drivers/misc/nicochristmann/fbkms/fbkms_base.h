@@ -1,11 +1,6 @@
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode);
 int fbkms_get_modes_wrapper(struct drm_connector *connector);
 
-void fbkms_setup_mode(struct fbkms_device *fbkms)
-{
-    fbkms->mode = fbkms_output_config;
-};
-
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
 {
     if (!connector) {
@@ -22,30 +17,15 @@ int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *ou
     pr_err("fbkms_get_modes: NULL mode!\n");
     return 0;
     }
-    
-    pr_info("loading modes\n");
 
-    struct drm_display_mode *mode = drm_mode_duplicate(connector->dev, output_mode);
-    if (!mode) {
-        pr_err("mode duplication failed\n");
-        return 0;
-    }
-
-    drm_mode_set_name(mode);
-
-    drm_mode_debug_printmodeline(mode);
+    drm_mode_debug_printmodeline(output_mode);
 
     pr_info("output_mode name: %s\n", mode->name);
-    
-    pr_info("about to set mode type flags\n");
-    mode->type |= DRM_MODE_TYPE_PREFERRED;
-    pr_info("mode type set, type now: 0x%x\n", mode->type);
 
     pr_info("adding mode to connector\n");
-    drm_mode_probed_add(connector, mode);
+    drm_mode_probed_add(connector, output_mode);
     pr_info("mode successfully added to connector\n");
 
-        
     return 1;
 }
 
@@ -170,9 +150,6 @@ fbkms->fb = info;
 
     drm_mode_config_init(&fbkms->drm);
     pr_info("fbkms: drm_mode_config_init done\n");
-
-    fbkms_setup_mode(fbkms);
-    pr_info("fbkms: mode setup done\n");
 
     ret = drm_simple_display_pipe_init(&fbkms->drm,
         &fbkms->pipe,
