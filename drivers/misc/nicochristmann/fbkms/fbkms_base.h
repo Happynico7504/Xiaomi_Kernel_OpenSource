@@ -70,6 +70,9 @@ static enum drm_connector_status fbkms_detect(struct drm_connector *connector, b
     return connector_status_connected;
 }
 
+static const struct drm_encoder_funcs fbkms_encoder_funcs = {
+    .destroy = drm_encoder_cleanup,
+};
 
 const struct drm_connector_funcs fbkms_conn_funcs = {
     .reset = drm_atomic_helper_connector_reset,
@@ -83,7 +86,6 @@ const struct drm_connector_funcs fbkms_conn_funcs = {
 const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
     .get_modes = fbkms_get_modes_wrapper,
 };
-
 
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
@@ -204,6 +206,15 @@ fbkms->fb = info;
     }
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
+
+    ret = drm_encoder_init(fbkms->dev, &fbkms->encoder, &fbkms_encoder_funcs, DRM_MODE_ENCODER_NONE);
+    if (ret) {
+        drm_connector_cleanup(&fbkms->connector);
+        return ret;
+    }
+
+    drm_mode_connector_attach_encoder(&fbkms->connector, &fbkms->encoder);
+
 
     fbkms->connector.dpms = DRM_MODE_DPMS_ON;
 
