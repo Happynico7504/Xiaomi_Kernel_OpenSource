@@ -36,6 +36,7 @@ int fbkms_get_modes_wrapper(struct drm_connector *connector)
 }
 
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
+{
     return connector_status_connected;
 }
 
