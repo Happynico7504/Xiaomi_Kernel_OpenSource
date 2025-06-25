@@ -207,7 +207,7 @@ fbkms->fb = info;
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
-    ret = drm_encoder_init(fbkms->drm, &fbkms->encoder, &fbkms_encoder_funcs, DRM_MODE_ENCODER_NONE, "dummy encoder");
+    ret = drm_encoder_init(&fbkms->drm, &fbkms->encoder, &fbkms_encoder_funcs, DRM_MODE_ENCODER_NONE, "dummy encoder");
     if (ret) {
         drm_connector_cleanup(&fbkms->connector);
         return ret;
