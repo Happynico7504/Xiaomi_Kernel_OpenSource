@@ -1,130 +1,122 @@
-/* SPDX-License-Identifier: GPL-2.0 / /
+// SPDX-License-Identifier: GPL-2.0
+// Minimal pstore raw backend for a block device
 
-Implements pstore backend driver that writes to block (or non-block)
+#include <linux/module.h>
+#include <linux/kernel.h>
+#include <linux/init.h>
+#include <linux/fs.h>
+#include <linux/blkdev.h>
+#include <linux/pstore.h>
+#include <linux/buffer_head.h>
 
-storage devices, using the pstore/zone API.
+#define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
+#define PSTORE_BLOCK_SIZE 512
+#define PSTORE_MAX_RECORDS 16
+#define PSTORE_HEADER_OFFSET 0 // Block 0
+#define PSTORE_DATA_OFFSET 1   // Start from Block 1
 
-Based on initial patch from OpenHarmony:
+struct pstore_raw_header {
+    u32 magic;
+    u32 record_count;
+};
 
-https://lists.openatom.io/hyperkitty/list/kernel@openharmony.io/thread/FGGOF2PMPVAVZBS2A6GIT264RKLN44MO/ */
+static struct block_device *bdev;
+static char *device_path = "/dev/mmcblk1p3";
+module_param(device_path, charp, 0444);
+MODULE_PARM_DESC(device_path, "Path to raw block device for pstore");
 
+static ssize_t raw_write(u32 id, enum pstore_type_id type,
+                         const char *data, size_t size)
+{
+    struct buffer_head *bh;
+    struct pstore_raw_header *hdr;
+    struct page *page;
+    loff_t block = PSTORE_DATA_OFFSET + id;
 
-#include <linux/kernel.h> #include <linux/module.h> #include <linux/init.h> #include <linux/fs.h> #include <linux/uaccess.h> #include <linux/slab.h> #include <linux/mount.h> #include <linux/namei.h> #include <linux/blkdev.h> #include <linux/buffer_head.h> #include <linux/uuid.h> #include <linux/vmalloc.h> #include <linux/pstore.h> #include <linux/pstore_zone.h> #include <linux/pstore_blk.h> #include <linux/of.h> #include <linux/of_platform.h>
+    if (size > PSTORE_BLOCK_SIZE)
+        return -EINVAL;
 
-#define PSTORE_BLK_FS_TYPE "pstoreblkfs" #define PSTORE_BLK_MAGIC  0x70737462 /* 'pstb' */
+    page = alloc_page(GFP_KERNEL);
+    if (!page)
+        return -ENOMEM;
 
-static char *pstore_blk_dev; static char *pstore_blk_mntpoint; static struct file_system_type *blkfs; static struct vfsmount *blkfs_mnt; static struct pstore_zone_info zone_info;
+    memcpy(page_address(page), data, size);
+    bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
+    if (!bh) {
+        __free_page(page);
+        return -EIO;
+    }
+    memcpy(bh->b_data, page_address(page), PSTORE_BLOCK_SIZE);
+    mark_buffer_dirty(bh);
+    sync_dirty_buffer(bh);
+    brelse(bh);
+    __free_page(page);
 
-module_param(pstore_blk_dev, charp, 0); MODULE_PARM_DESC(pstore_blk_dev, "pstore block backend device path");
-
-module_param(pstore_blk_mntpoint, charp, 0); MODULE_PARM_DESC(pstore_blk_mntpoint, "pstore block backend mount point");
-
-static struct file *pstore_blk_file_open(const char *path, int flags, int mode) { struct file *filp;
-
-filp = filp_open(path, flags, mode);
-if (IS_ERR(filp)) {
-    pr_err("pstore_blk: unable to open file %s, err %ld\n", path, PTR_ERR(filp));
-    return NULL;
-}
-return filp;
-
-}
-
-static ssize_t pstore_blk_file_read(struct file *file, char *buf, size_t len, loff_t *pos) { mm_segment_t old_fs; ssize_t ret;
-
-old_fs = get_fs();
-set_fs(KERNEL_DS);
-ret = vfs_read(file, buf, len, pos);
-set_fs(old_fs);
-
-return ret;
-
-}
-
-static ssize_t pstore_blk_file_write(struct file *file, const char *buf, size_t len, loff_t *pos) { mm_segment_t old_fs; ssize_t ret;
-
-old_fs = get_fs();
-set_fs(KERNEL_DS);
-ret = vfs_write(file, buf, len, pos);
-set_fs(old_fs);
-
-return ret;
-
-}
-
-static int pstore_blk_open(struct pstore_zone_info zone) { / Initialize filesystem mount point */ struct path path; int err;
-
-err = kern_path(pstore_blk_mntpoint, LOOKUP_DIRECTORY, &path);
-if (err) {
-    pr_err("pstore_blk: failed to find mountpoint %s\n", pstore_blk_mntpoint);
-    return err;
-}
-blkfs_mnt = path.mnt;
-return 0;
-
-}
-
-static int pstore_blk_read(struct pstore_zone_info *zone, struct pstore_record *record) { struct file *file; loff_t pos = 0; char filename[256];
-
-snprintf(filename, sizeof(filename), "%s/%s-%lld", pstore_blk_mntpoint,
-         pstore_record_type_to_name(record->type), record->id);
-
-file = pstore_blk_file_open(filename, O_RDONLY, 0);
-if (!file)
-    return -ENOENT;
-
-record->buf = vmalloc(record->size);
-if (!record->buf) {
-    filp_close(file, NULL);
-    return -ENOMEM;
+    // update header
+    bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
+    if (bh) {
+        hdr = (struct pstore_raw_header *)bh->b_data;
+        if (hdr->magic != PSTORE_RAW_MAGIC)
+            hdr->magic = PSTORE_RAW_MAGIC;
+        hdr->record_count++;
+        mark_buffer_dirty(bh);
+        sync_dirty_buffer(bh);
+        brelse(bh);
+    }
+    return size;
 }
 
-pstore_blk_file_read(file, record->buf, record->size, &pos);
-filp_close(file, NULL);
-
-return 0;
-
+static int raw_pstore_write(struct pstore_record *record)
+{
+    return raw_write(record->id, record->type, record->buf, record->size);
 }
 
-static int pstore_blk_write(struct pstore_zone_info *zone, struct pstore_record *record) { struct file *file; loff_t pos = 0; char filename[256];
+static struct pstore_backend raw_backend = {
+    .name = "rawblk",
+    .owner = THIS_MODULE,
+    .write = raw_pstore_write,
+};
 
-snprintf(filename, sizeof(filename), "%s/%s-%lld", pstore_blk_mntpoint,
-         pstore_record_type_to_name(record->type), record->id);
+static int __init rawblk_init(void)
+{
+    struct pstore_raw_header *hdr;
+    struct buffer_head *bh;
 
-file = pstore_blk_file_open(filename, O_WRONLY | O_CREAT, 0644);
-if (!file)
-    return -EIO;
+    bdev = blkdev_get_by_path(device_path, FMODE_READ | FMODE_WRITE | FMODE_EXCL, NULL);
+    if (IS_ERR(bdev)) {
+        pr_err("pstore_rawblk: cannot open %s\n", device_path);
+        return PTR_ERR(bdev);
+    }
 
-pstore_blk_file_write(file, record->buf, record->size, &pos);
-filp_close(file, NULL);
+    bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
+    if (!bh) {
+        pr_err("pstore_rawblk: unable to read header block\n");
+        blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
+        return -EIO;
+    }
+    hdr = (struct pstore_raw_header *)bh->b_data;
+    if (hdr->magic != PSTORE_RAW_MAGIC) {
+        pr_info("pstore_rawblk: formatting storage\n");
+        memset(hdr, 0, PSTORE_BLOCK_SIZE);
+        hdr->magic = PSTORE_RAW_MAGIC;
+        hdr->record_count = 0;
+        mark_buffer_dirty(bh);
+        sync_dirty_buffer(bh);
+    }
+    brelse(bh);
 
-return 0;
-
+    return pstore_register(&raw_backend);
 }
 
-static struct pstore_zone_backend pstore_blk_backend = { .name       = "blk", .owner      = THIS_MODULE, .open       = pstore_blk_open, .read       = pstore_blk_read, .write      = pstore_blk_write, };
-
-static int __init pstore_blk_init(void) { int ret;
-
-if (!pstore_blk_dev || !pstore_blk_mntpoint) {
-    pr_err("pstore_blk: device and mountpoint must be specified\n");
-    return -EINVAL;
+static void __exit rawblk_exit(void)
+{
+    pstore_unregister(&raw_backend);
+    blkdev_put(bdev, FMODE_READ | FMODE_WRITE | FMODE_EXCL);
 }
 
-ret = pstore_register_zone_backend(&pstore_blk_backend);
-if (ret) {
-    pr_err("pstore_blk: failed to register backend\n");
-    return ret;
-}
+module_init(rawblk_init);
+module_exit(rawblk_exit);
 
-pr_info("pstore_blk: registered block backend for pstore\n");
-return 0;
-
-}
-
-static void __exit pstore_blk_exit(void) { pstore_unregister_zone_backend(&pstore_blk_backend); pr_info("pstore_blk: unregistered block backend\n"); }
-
-module_init(pstore_blk_init); module_exit(pstore_blk_exit);
-
-MODULE_AUTHOR("OpenHarmony/Linux Community"); MODULE_LICENSE("GPL"); MODULE_DESCRIPTION("Pstore Block Backend using pstore/zone API");
-
+MODULE_LICENSE("GPL");
+MODULE_AUTHOR("nico (via ChatGPT)");
+MODULE_DESCRIPTION("Minimal pstore backend using raw block device");
