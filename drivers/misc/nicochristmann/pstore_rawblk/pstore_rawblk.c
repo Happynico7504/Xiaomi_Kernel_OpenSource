@@ -133,6 +133,8 @@ static int __init rawblk_init(void)
     struct pstore_raw_header *hdr;
     struct buffer_head *bh;
 
+    rawblk_holder = THIS_MODULE;
+
     bdev = blkdev_get_by_path(device_path, FMODE_READ | FMODE_WRITE | FMODE_EXCL, rawblk_holder);
     if (IS_ERR(bdev)) {
         pr_err("pstore_rawblk: cannot open %s\n", device_path);
