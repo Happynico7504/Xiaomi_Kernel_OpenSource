@@ -28,6 +28,11 @@ static char *device_path = "/dev/mmcblk1p3";
 module_param(device_path, charp, 0444);
 MODULE_PARM_DESC(device_path, "Path to raw block device for pstore");
 
+static bool raw_can_write(enum pstore_type_id type)
+{
+    return true;
+}
+
 static ssize_t raw_write(u32 id, enum pstore_type_id type,
                          const char *data, size_t size)
 {
@@ -113,6 +118,8 @@ static struct pstore_info raw_backend = {
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
+    .can_write = raw_can_write,
+    .flags = PSTORE_TYPE_DMESG | PSTORE_TYPE_CONSOLE | PSTORE_TYPE_PMSG,
 };
 
 static int __init rawblk_init(void)
