@@ -30,6 +30,7 @@ MODULE_PARM_DESC(device_path, "Path to raw block device for pstore");
 
 static bool raw_can_write(enum pstore_type_id type)
 {
+    pr_info("rawblk: can_write called for type %d\n", type);
     return true;
 }
 
@@ -119,7 +120,12 @@ static struct pstore_info raw_backend = {
     .open       = NULL,
     .close      = NULL,
     .can_write = raw_can_write,
-    .flags = PSTORE_TYPE_DMESG | PSTORE_TYPE_CONSOLE | PSTORE_TYPE_PMSG,
+    .flags = PSTORE_TYPE_DMESG |
+         PSTORE_TYPE_CONSOLE |
+         PSTORE_TYPE_PMSG |
+         PSTORE_TYPE_FTRACE |
+         PSTORE_TYPE_MCE |
+         PSTORE_TYPE_UNKNOWN,
 };
 
 static int __init rawblk_init(void)
