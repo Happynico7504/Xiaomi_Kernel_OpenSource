@@ -85,7 +85,6 @@ static int raw_pstore_write(struct pstore_record *record)
 
 static struct pstore_backend raw_backend = {
     .name = "rawblk",
-    .owner = THIS_MODULE,
     .write = raw_pstore_write,
 };
 
