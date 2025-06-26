@@ -12,8 +12,6 @@
 
 static struct module *rawblk_holder;
 
-rawblk_holder = THIS_MODULE;
-
 struct pstore_backend {
 	const char			*name;
 	int (*open)(void);
