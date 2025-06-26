@@ -152,20 +152,7 @@ fbkms->fb = info;
     drm_mode_config_init(&fbkms->drm);
     pr_info("fbkms: drm_mode_config_init done\n");
 
-    ret = drm_simple_display_pipe_init(&fbkms->drm,
-        &fbkms->pipe,
-        &fbkms_pipe_funcs,
-        fbkms_formats, ARRAY_SIZE(fbkms_formats),
-        NULL,
-        &fbkms->connector);
-    
-    if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
-        goto err_config;
-    }
-    pr_info("fbkms: display pipe init done\n");
-
-    ret = drm_connector_init(&fbkms->drm, &fbkms->connector,
+        ret = drm_connector_init(&fbkms->drm, &fbkms->connector,
                          &fbkms_conn_funcs, DRM_MODE_CONNECTOR_Unknown);
     if (ret) {
         dev_err(&pdev->dev, "failed to init connector (%d)\n", ret);
@@ -185,6 +172,18 @@ fbkms->fb = info;
         conn->display_info.height_mm = 122;
         conn->polled = DRM_CONNECTOR_POLL_CONNECT;
 
+    ret = drm_simple_display_pipe_init(&fbkms->drm,
+        &fbkms->pipe,
+        &fbkms_pipe_funcs,
+        fbkms_formats, ARRAY_SIZE(fbkms_formats),
+        NULL,
+        &fbkms->connector);
+    
+    if (ret) {
+        dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
+        goto err_config;
+    }
+    pr_info("fbkms: display pipe init done\n");
     
     ret = drm_dev_register(&fbkms->drm, 0);
     if (ret) {
