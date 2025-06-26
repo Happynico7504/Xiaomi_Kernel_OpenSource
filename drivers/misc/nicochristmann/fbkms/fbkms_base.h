@@ -103,18 +103,17 @@ static struct drm_driver fbkms_driver = {
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
+    struct fb_info *info = NULL;
     int ret;
 
     pr_info("fbkms: probe started\n");
 
+    // Speicher allozieren
     fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
-    if (!fbkms) {
-        dev_err(&pdev->dev, "fbkms: failed to allocate device struct\n");
-        return -ENOMEM;
-    }
+    if (!fbkms)
+        return dev_err_probe(&pdev->dev, -ENOMEM, "Failed to allocate device struct\n");
 
-    struct fb_info *info = NULL;
-
+    // Ein valides fb Gerät suchen
     for (int i = 0; i < FB_MAX; i++) {
         if (registered_fb[i] && registered_fb[i]->screen_base) {
             info = registered_fb[i];
@@ -122,84 +121,68 @@ static int fbkms_probe(struct platform_device *pdev)
         }
     }
 
-if (!info) {
-    dev_err(&pdev->dev, "fbkms: no valid fb device found\n");
-    return -ENODEV;
-}
+    if (!info)
+        return dev_err_probe(&pdev->dev, -ENODEV, "No valid framebuffer device found\n");
 
-fbkms->fb = info;
-
-
-    platform_set_drvdata(pdev, fbkms);
-    pr_info("fbkms: platform data set\n");
-
+    fbkms->fb = info;
     fbkms->drm.dev = &pdev->dev;
+    platform_set_drvdata(pdev, fbkms);
+
+    // DRM-Gerät initialisieren
     ret = drm_dev_init(&fbkms->drm, &fbkms_driver, &pdev->dev);
-    if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_dev_init failed (%d)\n", ret);
-        return ret;
-    }
-    pr_info("fbkms: drm_dev_init successful\n");
+    if (ret)
+        return dev_err_probe(&pdev->dev, ret, "drm_dev_init failed\n");
 
-    if (!fbkms->drm.dev) {
-      pr_err("fbkms: drm.dev is NULL!\n");
-      return -EINVAL;
-    }
-
-    pr_info("fbkms: drm.dev = %px\n", &fbkms->drm);
-    pr_info("fbkms: drm.dev.dev = %px\n", fbkms->drm.dev);
-
+    // KMS-Konfig initialisieren
     drm_mode_config_init(&fbkms->drm);
     pr_info("fbkms: drm_mode_config_init done\n");
 
-        ret = drm_connector_init(&fbkms->drm, &fbkms->connector,
-                         &fbkms_conn_funcs, DRM_MODE_CONNECTOR_Unknown);
+    // Display Pipe zuerst initialisieren – erzeugt intern encoder!
+    ret = drm_simple_display_pipe_init(&fbkms->drm,
+        &fbkms->pipe,
+        &fbkms_pipe_funcs,
+        fbkms_formats, ARRAY_SIZE(fbkms_formats),
+        NULL, // connector separat
+        NULL);
     if (ret) {
-        dev_err(&pdev->dev, "failed to init connector (%d)\n", ret);
+        dev_err(&pdev->dev, "drm_simple_display_pipe_init failed (%d)\n", ret);
+        goto err_config;
+    }
+
+    // Connector initialisieren
+    ret = drm_connector_init(&fbkms->drm,
+                             &fbkms->connector,
+                             &fbkms_conn_funcs,
+                             DRM_MODE_CONNECTOR_Unknown);
+    if (ret) {
+        dev_err(&pdev->dev, "drm_connector_init failed (%d)\n", ret);
         goto err_pipe;
     }
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
+    // Encoder anhängen
     ret = drm_connector_attach_encoder(&fbkms->connector, &fbkms->pipe.encoder);
     if (ret) {
-        dev_err(&pdev->dev, "fbkms: attach_encoder failed (%d)\n", ret);
-        return ret;
-    }
-    
-    fbkms->connector.dpms = DRM_MODE_DPMS_ON;
-
-    struct drm_connector *conn = &fbkms->connector;
-    if (!conn) {
-        dev_err(&pdev->dev, "fbkms: connector is NULL!\n");
-        return -EINVAL;
-    }
-        conn->display_info.width_mm = 68;
-        conn->display_info.height_mm = 122;
-        conn->polled = DRM_CONNECTOR_POLL_CONNECT;
-
-    ret = drm_simple_display_pipe_init(&fbkms->drm,
-        &fbkms->pipe,
-        &fbkms_pipe_funcs,
-        fbkms_formats, ARRAY_SIZE(fbkms_formats),
-        NULL,
-        &fbkms->connector);
-    
-    if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed (%d)\n", ret);
-        goto err_config;
-    }
-    pr_info("fbkms: display pipe init done\n");
-    
-    ret = drm_dev_register(&fbkms->drm, 0);
-    if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_dev_register failed (%d)\n", ret);
+        dev_err(&pdev->dev, "drm_connector_attach_encoder failed (%d)\n", ret);
         goto err_pipe;
     }
-    pr_info("fbkms: drm_dev_register success\n");
 
+    // Zusätzliche Connector-Infos
+    fbkms->connector.dpms = DRM_MODE_DPMS_ON;
+    fbkms->connector.display_info.width_mm = 68;
+    fbkms->connector.display_info.height_mm = 122;
+    fbkms->connector.polled = DRM_CONNECTOR_POLL_CONNECT;
+
+    // Gerät registrieren
+    ret = drm_dev_register(&fbkms->drm, 0);
+    if (ret) {
+        dev_err(&pdev->dev, "drm_dev_register failed (%d)\n", ret);
+        goto err_pipe;
+    }
+
+    // Polling aktivieren (für Hotplug etc.)
     drm_kms_helper_poll_init(&fbkms->drm);
-    pr_info("fbkms: KMS poll init done\n");
 
     dev_info(&pdev->dev, "fbkms driver registered successfully\n");
     return 0;
@@ -210,7 +193,7 @@ err_config:
     drm_dev_put(&fbkms->drm);
     return ret;
 }
-
+    
 static int fbkms_remove(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms = platform_get_drvdata(pdev);
