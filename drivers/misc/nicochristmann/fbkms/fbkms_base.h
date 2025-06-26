@@ -111,7 +111,8 @@ static int fbkms_probe(struct platform_device *pdev)
     // Speicher allozieren
     fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
     if (!fbkms)
-        return dev_err(&pdev->dev, "Failed to allocate device struct\n");
+        dev_err(&pdev->dev, "Failed to allocate device struct\n");
+        return -1;
 
     // Ein valides fb Gerät suchen
     for (int i = 0; i < FB_MAX; i++) {
@@ -122,7 +123,8 @@ static int fbkms_probe(struct platform_device *pdev)
     }
 
     if (!info)
-        return dev_err(&pdev->dev, "No valid framebuffer device found\n");
+        dev_err(&pdev->dev, "No valid framebuffer device found\n");
+        return -1;
 
     fbkms->fb = info;
     fbkms->drm.dev = &pdev->dev;
@@ -131,7 +133,8 @@ static int fbkms_probe(struct platform_device *pdev)
     // DRM-Gerät initialisieren
     ret = drm_dev_init(&fbkms->drm, &fbkms_driver, &pdev->dev);
     if (ret)
-        return dev_err(&pdev->dev, "drm_dev_init failed\n");
+        dev_err(&pdev->dev, "drm_dev_init failed\n");
+        return -1;
 
     // KMS-Konfig initialisieren
     drm_mode_config_init(&fbkms->drm);
