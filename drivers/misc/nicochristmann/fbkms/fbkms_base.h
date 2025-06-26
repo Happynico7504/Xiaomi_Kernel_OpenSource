@@ -1,38 +1,28 @@
 int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode);
-int fbkms_get_modes_wrapper(struct drm_connector *connector);
 
-int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode)
+int fbkms_get_modes(struct drm_connector *connector)
 {
-    if (!connector) {
-    pr_err("fbkms_get_modes: NULL connector!\n");
-    return 0;
+    struct drm_display_mode *mode;
+
+    pr_info("fbkms_get_modes: called\n");
+
+    if (!connector || !connector->dev) {
+        pr_err("fbkms_get_modes: invalid connector or dev\n");
+        return 0;
     }
 
-    if (!connector->dev) {
-    pr_err("fbkms_get_modes: NULL connector dev!\n");
-    return 0;
+    mode = drm_mode_duplicate(connector->dev, &fbkms_output_config);
+    if (!mode) {
+        pr_err("fbkms_get_modes: failed to duplicate mode\n");
+        return 0;
     }
 
-    if (!output_mode) {
-    pr_err("fbkms_get_modes: NULL mode!\n");
-    return 0;
-    }
+    drm_mode_set_name(mode);  // falls .name nicht korrekt gesetzt war
+    drm_mode_probed_add(connector, mode);
 
-    drm_mode_debug_printmodeline(output_mode);
-
-    pr_info("output_mode name: %s\n", output_mode->name);
-
-    pr_info("adding mode to connector\n");
-    drm_mode_probed_add(connector, output_mode);
-    pr_info("mode successfully added to connector\n");
+    pr_info("fbkms_get_modes: added mode %s\n", mode->name);
 
     return 1;
-}
-
-int fbkms_get_modes_wrapper(struct drm_connector *connector)
-{
-    pr_info("prepare for mode loading\n");
-    return fbkms_get_modes(connector, &fbkms_output_config);
 }
 
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
@@ -54,7 +44,7 @@ const struct drm_connector_funcs fbkms_conn_funcs = {
 };
 
 const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
-    .get_modes = fbkms_get_modes_wrapper,
+    .get_modes = fbkms_get_modes,
 };
 
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
