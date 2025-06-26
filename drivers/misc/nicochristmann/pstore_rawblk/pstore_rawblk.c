@@ -16,6 +16,8 @@
 #define PSTORE_HEADER_OFFSET 0 // Block 0
 #define PSTORE_DATA_OFFSET 1   // Start from Block 1
 
+static struct module *rawblk_holder;
+
 struct pstore_raw_header {
     u32 magic;
     u32 record_count;
@@ -84,7 +86,6 @@ static int raw_pstore_read(struct pstore_record *record)
     }
     brelse(bh);
 
-    // Lese eigentliche Daten
     bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
     if (!bh)
         return -EIO;
@@ -109,7 +110,6 @@ static struct pstore_info raw_backend = {
     .name       = "rawblk",
     .read       = raw_pstore_read,
     .write      = raw_pstore_write,
-    .can_write  = NULL,
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
