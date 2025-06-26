@@ -78,15 +78,54 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
     return size;
 }
 
+static int raw_pstore_read(struct pstore_record *record)
+{
+    struct buffer_head *bh;
+    struct pstore_raw_header *hdr;
+    u32 id = record->id;
+    loff_t block = PSTORE_DATA_OFFSET + id;
+
+    bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
+    if (!bh)
+        return -EIO;
+    hdr = (struct pstore_raw_header *)bh->b_data;
+    if (id >= hdr->record_count) {
+        brelse(bh);
+        return -ENODATA;
+    }
+    brelse(bh);
+
+    // Lese eigentliche Daten
+    bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
+    if (!bh)
+        return -EIO;
+
+    record->type = PSTORE_TYPE_DMESG;
+    record->size = PSTORE_BLOCK_SIZE;
+    record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
+    record->time = ktime_get_real_seconds(); // oder aus Header
+    record->id = id;
+
+    brelse(bh);
+    return 0;
+}
+
+
 static int raw_pstore_write(struct pstore_record *record)
 {
     return raw_write(record->id, record->type, record->buf, record->size);
 }
 
 static struct pstore_backend raw_backend = {
-    .name = "rawblk",
-    .write = raw_pstore_write,
+    .name       = "rawblk",
+    .read       = raw_pstore_read,
+    .write      = raw_pstore_write,
+    .can_write  = NULL,
+    .erase      = NULL,
+    .open       = NULL,
+    .close      = NULL,
 };
+
 
 static int __init rawblk_init(void)
 {
@@ -130,4 +169,4 @@ module_exit(rawblk_exit);
 
 MODULE_LICENSE("GPL");
 MODULE_AUTHOR("Nico Christmann");
-MODULE_DESCRIPTION("Minimal pstore backend using raw block device");
+MODULE_DESCRIPTION("pstore backend using raw block device");
