@@ -1,1 +1,1 @@
-obj-y += pstore_blk.o
+obj-y += pstore_rawblk.o
