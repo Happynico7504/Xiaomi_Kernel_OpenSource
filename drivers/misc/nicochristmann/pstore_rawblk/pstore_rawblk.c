@@ -10,17 +10,16 @@
 #include <linux/buffer_head.h>
 #include <linux/pstore.h>
 
-static struct module *rawblk_holder;
+#include <linux/pstore.h>
 
-struct pstore_backend {
-	const char			*name;
-	int (*open)(void);
-	int (*close)(void);
-	int (*read)(struct pstore_record *);
-	int (*write)(struct pstore_record *);
-	int (*erase)(const struct pstore_record *);
-	bool (*can_write)(enum pstore_type_id);
-	void (*read_done)(struct pstore_record *);
+static struct pstore_info raw_backend = {
+    .name       = "rawblk",
+    .read       = raw_pstore_read,
+    .write      = raw_pstore_write,
+    .can_write  = raw_can_write,  // optional
+    .erase      = NULL,
+    .open       = NULL,
+    .close      = NULL,
 };
 
 #define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
