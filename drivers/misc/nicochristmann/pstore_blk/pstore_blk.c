@@ -118,5 +118,5 @@ module_init(rawblk_init);
 module_exit(rawblk_exit);
 
 MODULE_LICENSE("GPL");
-MODULE_AUTHOR("nico (via ChatGPT)");
+MODULE_AUTHOR("Nico Christmann");
 MODULE_DESCRIPTION("Minimal pstore backend using raw block device");
