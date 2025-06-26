@@ -1,5 +1,3 @@
-int fbkms_get_modes(struct drm_connector *connector, struct drm_display_mode *output_mode);
-
 int fbkms_get_modes(struct drm_connector *connector)
 {
     struct drm_display_mode *mode;
