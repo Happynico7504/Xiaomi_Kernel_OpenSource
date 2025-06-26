@@ -166,6 +166,8 @@ static int fbkms_probe(struct platform_device *pdev)
         goto err_config;
     }
 
+    fbkms->pipe.crtc.dev = &fbkms->drm;
+
     // Connector initialisieren
     ret = drm_connector_init(&fbkms->drm,
                              &fbkms->connector,
