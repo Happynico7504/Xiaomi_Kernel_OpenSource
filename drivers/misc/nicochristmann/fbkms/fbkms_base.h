@@ -197,17 +197,26 @@ err_config:
 static int fbkms_remove(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms = platform_get_drvdata(pdev);
+    if (!fbkms) {
+        dev_warn(&pdev->dev, "fbkms: remove called but no drvdata set\n");
+        return -ENODEV;
+    }
+
     pr_info("fbkms: remove called\n");
 
+    // Polling beenden
     drm_kms_helper_poll_fini(&fbkms->drm);
-    pr_info("fbkms: shutting down polling\n");
+    pr_info("fbkms: polling shutdown done\n");
 
+    // DRM Gerät deregistrieren
     drm_dev_unregister(&fbkms->drm);
     pr_info("fbkms: drm_dev_unregister done\n");
 
+    // KMS-Konfiguration freigeben
     drm_mode_config_cleanup(&fbkms->drm);
     pr_info("fbkms: drm_mode_config_cleanup done\n");
 
+    // Referenzzählung verringern, Gerät wird ggf. freigegeben
     drm_dev_put(&fbkms->drm);
     pr_info("fbkms: drm_dev_put done\n");
 
