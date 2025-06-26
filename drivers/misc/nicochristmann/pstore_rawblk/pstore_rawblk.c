@@ -10,18 +10,6 @@
 #include <linux/buffer_head.h>
 #include <linux/pstore.h>
 
-#include <linux/pstore.h>
-
-static struct pstore_info raw_backend = {
-    .name       = "rawblk",
-    .read       = raw_pstore_read,
-    .write      = raw_pstore_write,
-    .can_write  = NULL,
-    .erase      = NULL,
-    .open       = NULL,
-    .close      = NULL,
-};
-
 #define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
 #define PSTORE_BLOCK_SIZE 512
 #define PSTORE_MAX_RECORDS 16
@@ -117,7 +105,7 @@ static int raw_pstore_write(struct pstore_record *record)
     return raw_write(record->id, record->type, record->buf, record->size);
 }
 
-static struct pstore_backend raw_backend = {
+static struct pstore_info raw_backend = {
     .name       = "rawblk",
     .read       = raw_pstore_read,
     .write      = raw_pstore_write,
@@ -126,7 +114,6 @@ static struct pstore_backend raw_backend = {
     .open       = NULL,
     .close      = NULL,
 };
-
 
 static int __init rawblk_init(void)
 {
