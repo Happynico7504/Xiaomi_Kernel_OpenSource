@@ -49,19 +49,34 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
                               struct drm_plane_state *plane_state)
 {
-  
-    struct fbkms_device *fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
+    struct fbkms_device *fbkms;
+    struct drm_framebuffer *fb;
+    struct drm_gem_cma_object *cma_obj;
+    void *src;
 
-    struct drm_framebuffer *fb = plane_state->fb;
+    if (!pipe || !pipe->crtc.dev || !plane_state) {
+        pr_err("fbkms: invalid pipe/crtc/plane_state!\n");
+        return;
+    }
 
-    struct drm_gem_cma_object *cma_obj = to_drm_gem_cma_obj(fb->obj[0]);
-    void *src = cma_obj->vaddr;
+    fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
+    fb = plane_state->fb;
 
-    memcpy(fbkms->fb->screen_base, src,
-           fb->height * fb->pitches[0]);
+    if (!fb || !fb->obj[0]) {
+        pr_err("fbkms: framebuffer or object is NULL!\n");
+        return;
+    }
 
-    pr_info("fbkms pipe enabled\n");
-  
+    cma_obj = to_drm_gem_cma_obj(fb->obj[0]);
+    src = cma_obj->vaddr;
+
+    if (!src || !fbkms->fb || !fbkms->fb->screen_base) {
+        pr_err("fbkms: invalid src or screen_base!\n");
+        return;
+    }
+
+    memcpy(fbkms->fb->screen_base, src, fb->height * fb->pitches[0]);
+    pr_info("fbkms: pipe enabled\n");
 }
 
 static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
