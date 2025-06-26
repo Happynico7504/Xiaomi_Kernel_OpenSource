@@ -49,10 +49,6 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
                               struct drm_plane_state *plane_state)
 {
-    struct fbkms_device *fbkms;
-    struct drm_framebuffer *fb;
-    struct drm_gem_cma_object *cma_obj;
-    void *src;
 
     if (!pipe) {
         pr_err("fbkms: pipe is NULL!\n");
@@ -66,8 +62,12 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
         pr_err("fbkms: plane_state is NULL!\n");
         return;
     }
+    struct drm_device *dev = pipe->crtc.dev;
+    struct fbkms_device *fbkms = container_of(dev, struct fbkms_device, drm);
+    struct drm_framebuffer *fb;
+    struct drm_gem_cma_object *cma_obj;
+    void *src;
 
-    fbkms = container_of(pipe->crtc.dev, struct fbkms_device, drm);
     fb = plane_state->fb;
 
     if (!fb || !fb->obj[0]) {
