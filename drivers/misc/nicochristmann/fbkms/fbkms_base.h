@@ -54,8 +54,16 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
     struct drm_gem_cma_object *cma_obj;
     void *src;
 
-    if (!pipe || !pipe->crtc.dev || !plane_state) {
-        pr_err("fbkms: invalid pipe/crtc/plane_state!\n");
+    if (!pipe) {
+        pr_err("fbkms: pipe is NULL!\n");
+        return;
+    }
+    if (!pipe->crtc.dev) {
+        pr_err("fbkms: crtc.dev is NULL!\n");
+        return;
+    }
+    if (!plane_state) {
+        pr_err("fbkms: plane_state is NULL!\n");
         return;
     }
 
