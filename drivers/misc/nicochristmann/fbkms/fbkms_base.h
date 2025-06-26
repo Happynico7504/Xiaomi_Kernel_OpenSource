@@ -161,6 +161,12 @@ fbkms->fb = info;
 
     drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
 
+    ret = drm_connector_attach_encoder(&fbkms->connector, &fbkms->pipe.encoder);
+    if (ret) {
+        dev_err(&pdev->dev, "fbkms: attach_encoder failed (%d)\n", ret);
+        return ret;
+    }
+    
     fbkms->connector.dpms = DRM_MODE_DPMS_ON;
 
     struct drm_connector *conn = &fbkms->connector;
