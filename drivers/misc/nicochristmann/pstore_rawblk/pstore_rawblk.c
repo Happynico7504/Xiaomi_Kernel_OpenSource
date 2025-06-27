@@ -77,14 +77,30 @@ static int raw_pstore_read(struct pstore_record *record)
     loff_t block = PSTORE_DATA_OFFSET + id;
 
     bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
-    if (!bh)
-        return -EIO;
-    hdr = (struct pstore_raw_header *)bh->b_data;
+if (!bh)
+    return -EIO;
 
-    if (hdr->magic != PSTORE_RAW_MAGIC || hdr->record_count > PSTORE_MAX_RECORDS) {
-        brelse(bh);
-        return -EINVAL;
-    }
+hdr = (struct pstore_raw_header *)bh->b_data;
+
+if (hdr->magic != PSTORE_RAW_MAGIC) {
+    brelse(bh);
+    return -EINVAL;
+}
+
+if (hdr->record_count == 0) {
+    brelse(bh);
+    return -ENODATA;
+}
+
+if (hdr->record_count > PSTORE_MAX_RECORDS) {
+    brelse(bh);
+    return -EINVAL;
+}
+
+if (id >= hdr->record_count) {
+    brelse(bh);
+    return -ENODATA;
+}
 
     if (id >= hdr->record_count) {
         brelse(bh);
