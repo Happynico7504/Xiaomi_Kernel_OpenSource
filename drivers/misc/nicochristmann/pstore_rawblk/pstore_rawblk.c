@@ -12,7 +12,7 @@
 
 #define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
 #define PSTORE_BLOCK_SIZE 512
-#define PSTORE_MAX_RECORDS 16
+#define PSTORE_MAX_RECORDS 512
 #define PSTORE_HEADER_OFFSET 0 // Block 0
 #define PSTORE_DATA_OFFSET 1   // Start from Block 1
 
@@ -55,13 +55,13 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
     brelse(bh);
     __free_page(page);
 
-    // update header
     bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
     if (bh) {
         hdr = (struct pstore_raw_header *)bh->b_data;
         if (hdr->magic != PSTORE_RAW_MAGIC)
             hdr->magic = PSTORE_RAW_MAGIC;
-        hdr->record_count++;
+        if (id >= hdr->record_count && id < PSTORE_MAX_RECORDS)
+            hdr->record_count = id + 1;
         mark_buffer_dirty(bh);
         sync_dirty_buffer(bh);
         brelse(bh);
@@ -73,6 +73,12 @@ static int raw_pstore_read(struct pstore_record *record)
 {
     struct buffer_head *bh;
     struct pstore_raw_header *hdr;
+
+    if (hdr->record_count > PSTORE_MAX_RECORDS) {
+    brelse(bh);
+    return -EIO;
+    }
+    
     u32 id = record->id;
     loff_t block = PSTORE_DATA_OFFSET + id;
 
