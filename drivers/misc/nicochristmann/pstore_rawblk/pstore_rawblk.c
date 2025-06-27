@@ -82,12 +82,15 @@ if (!bh)
 
 hdr = (struct pstore_raw_header *)bh->b_data;
 
-if (hdr->magic != PSTORE_RAW_MAGIC) {
+u32 magic = le32_to_cpu(hdr->magic);
+u32 record_count = le32_to_cpu(hdr->record_count);
+    
+if (magic != PSTORE_RAW_MAGIC) {
     brelse(bh);
     return -EINVAL;
 }
 
-if (hdr->record_count == 0) {
+if (record_count == 0) {
     brelse(bh);
     return -ENODATA;
 }
