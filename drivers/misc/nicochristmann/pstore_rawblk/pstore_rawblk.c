@@ -12,7 +12,7 @@
 
 #define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
 #define PSTORE_BLOCK_SIZE 512
-#define PSTORE_MAX_RECORDS 512
+#define PSTORE_MAX_RECORDS 256
 #define PSTORE_HEADER_OFFSET 0 // Block 0
 #define PSTORE_DATA_OFFSET 1   // Start from Block 1
 
@@ -76,13 +76,11 @@ static int raw_pstore_read(struct pstore_record *record)
     u32 id = record->id;
     loff_t block = PSTORE_DATA_OFFSET + id;
 
-    // Erst Header lesen
     bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
     if (!bh)
         return -EIO;
     hdr = (struct pstore_raw_header *)bh->b_data;
 
-    // Sicherstellen, dass der Header gültig ist
     if (hdr->magic != PSTORE_RAW_MAGIC || hdr->record_count > PSTORE_MAX_RECORDS) {
         brelse(bh);
         return -EINVAL;
@@ -120,12 +118,7 @@ static struct pstore_info raw_backend = {
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
-    .flags = PSTORE_TYPE_DMESG |
-         PSTORE_TYPE_CONSOLE |
-         PSTORE_TYPE_PMSG |
-         PSTORE_TYPE_FTRACE |
-         PSTORE_TYPE_MCE |
-         PSTORE_TYPE_UNKNOWN,
+    .flags = PSTORE_TYPE_DMESG,
 };
 
 static int __init rawblk_init(void)
