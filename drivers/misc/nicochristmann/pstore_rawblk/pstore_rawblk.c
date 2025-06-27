@@ -73,19 +73,21 @@ static int raw_pstore_read(struct pstore_record *record)
 {
     struct buffer_head *bh;
     struct pstore_raw_header *hdr;
-
-    if (hdr->record_count > PSTORE_MAX_RECORDS) {
-    brelse(bh);
-    return -EIO;
-    }
-    
     u32 id = record->id;
     loff_t block = PSTORE_DATA_OFFSET + id;
 
+    // Erst Header lesen
     bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
     if (!bh)
         return -EIO;
     hdr = (struct pstore_raw_header *)bh->b_data;
+
+    // Sicherstellen, dass der Header gültig ist
+    if (hdr->magic != PSTORE_RAW_MAGIC || hdr->record_count > PSTORE_MAX_RECORDS) {
+        brelse(bh);
+        return -EINVAL;
+    }
+
     if (id >= hdr->record_count) {
         brelse(bh);
         return -ENODATA;
@@ -105,7 +107,6 @@ static int raw_pstore_read(struct pstore_record *record)
     brelse(bh);
     return 0;
 }
-
 
 static int raw_pstore_write(struct pstore_record *record)
 {
