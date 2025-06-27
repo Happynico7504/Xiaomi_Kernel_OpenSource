@@ -118,7 +118,7 @@ static struct pstore_info raw_backend = {
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
-    .flags = PSTORE_TYPE_DMESG,
+    .flags = PSTORE_TYPE_CONSOLE,
 };
 
 static int __init rawblk_init(void)
