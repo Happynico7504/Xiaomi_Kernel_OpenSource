@@ -96,7 +96,7 @@ static int raw_pstore_read(struct pstore_record *record)
     if (!bh)
         return -EIO;
 
-    record->type = PSTORE_TYPE_DMESG;
+    record->type = PSTORE_TYPE_CONSOLE;
     record->size = PSTORE_BLOCK_SIZE;
     record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
     record->time = ns_to_timespec64(ktime_get_real_ns());
