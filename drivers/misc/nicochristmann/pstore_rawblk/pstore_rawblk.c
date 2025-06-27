@@ -96,7 +96,6 @@ static int raw_pstore_read(struct pstore_record *record)
     if (!bh)
         return -EIO;
 
-    record->type = PSTORE_TYPE_CONSOLE;
     record->size = PSTORE_BLOCK_SIZE;
     record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
     record->time = ns_to_timespec64(ktime_get_real_ns());
@@ -118,7 +117,7 @@ static struct pstore_info raw_backend = {
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
-    .flags = PSTORE_TYPE_CONSOLE,
+    .flags = PSTORE_TYPE_DMESG | PSTORE_TYPE_CONSOLE | PSTORE_TYPE_PMSG,
 };
 
 static int __init rawblk_init(void)
