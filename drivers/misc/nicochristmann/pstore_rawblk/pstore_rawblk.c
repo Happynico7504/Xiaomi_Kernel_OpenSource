@@ -21,7 +21,7 @@ static struct module *rawblk_holder;
 struct pstore_raw_header {
     u32 magic;
     u32 record_count;
-};
+} __attribute__((packed));
 
 static struct block_device *bdev;
 static char *device_path = "/dev/mmcblk1p3";
