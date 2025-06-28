@@ -124,6 +124,9 @@ static int raw_pstore_read(struct pstore_record *record)
 	record->compressed = false;
 
 	brelse(bh);
+
+	record->id = id + 1;
+
 	return 0;
 }
 
