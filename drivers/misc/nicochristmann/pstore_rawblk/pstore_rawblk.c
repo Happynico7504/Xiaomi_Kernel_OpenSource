@@ -143,7 +143,7 @@ static struct pstore_info raw_backend = {
     .erase      = NULL,
     .open       = NULL,
     .close      = NULL,
-    .flags = .flags = PSTORE_TYPE_DMESG |
+    .flags = PSTORE_TYPE_DMESG |
          PSTORE_TYPE_CONSOLE |
          PSTORE_TYPE_PMSG |
          PSTORE_TYPE_FTRACE |
