@@ -103,20 +103,34 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
 	return size;
 }
 
-static int raw_pstore_read(struct pstore_record *record)
+struct rawblk_context {
+	u32 current_type;
+	u32 current_id[PSTORE_TYPE_COUNT];
+};
+
+static void *rawblk_open(struct pstore_info *psi)
 {
-	static u32 read_id[PSTORE_TYPE_COUNT] = {0};
+	struct rawblk_context *ctx;
+
+	ctx = kzalloc(sizeof(*ctx), GFP_KERNEL);
+	if (!ctx)
+		return NULL;
+
+	ctx->current_type = 0;
+	return ctx;
+}
+
+static int rawblk_read(struct pstore_record *record)
+{
+	struct rawblk_context *ctx = record->private_data;
 	struct buffer_head *bh;
 	struct pstore_raw_header *hdr;
+	enum pstore_type_id type;
 	u32 id;
-	enum pstore_type_id type = record->type;
 	loff_t block;
 
-	if (type >= PSTORE_TYPE_COUNT)
+	if (!ctx)
 		return -EINVAL;
-
-	id = read_id[type];
-	record->id = id;
 
 	bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
 	if (!bh)
@@ -124,34 +138,41 @@ static int raw_pstore_read(struct pstore_record *record)
 
 	hdr = (struct pstore_raw_header *)bh->b_data;
 
-	if (hdr->magic != PSTORE_RAW_MAGIC) {
-		brelse(bh);
-		return -EINVAL;
+	while (ctx->current_type < PSTORE_TYPE_COUNT) {
+		type = ctx->current_type;
+		id = ctx->current_id[type];
+
+		if (id < hdr->record_count[type]) {
+			ctx->current_id[type]++;
+			brelse(bh);
+
+			block = PSTORE_DATA_OFFSET + TYPE_BLOCK_OFFSET(type) + id;
+			bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
+			if (!bh)
+				return -EIO;
+
+			record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
+			record->size = PSTORE_BLOCK_SIZE;
+			record->type = type;
+			record->id = id;
+			record->time = ns_to_timespec64(ktime_get_real_ns());
+			record->compressed = false;
+			record->private_data = ctx;
+
+			brelse(bh);
+			return record->size;
+		}
+
+		ctx->current_type++;
 	}
 
-	if (id >= hdr->record_count[type]) {
-		pr_info("pstore_rawblk: no more records for type %d (max=%u)\n", type, hdr->record_count[type]);
-		brelse(bh);
-		return -ENODATA;
-	}
-
-	block = PSTORE_DATA_OFFSET + TYPE_BLOCK_OFFSET(type) + id;
-	read_id[type]++;
 	brelse(bh);
+	return -ENODATA;
+}
 
-	pr_info("pstore_rawblk: reading record id %u for type %d\n", id, type);
-
-	bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
-	if (!bh)
-		return -EIO;
-
-	record->size = PSTORE_BLOCK_SIZE;
-	record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
-	record->time = ns_to_timespec64(ktime_get_real_ns());
-	record->compressed = false;
-
-	brelse(bh);
-	return record->size;
+static void rawblk_close(struct pstore_info *psi, void *private)
+{
+	kfree(private);
 }
 
 static int raw_pstore_write(struct pstore_record *record)
@@ -180,11 +201,11 @@ static int raw_pstore_write(struct pstore_record *record)
 
 static struct pstore_info raw_backend = {
 	.name       = "rawblk",
-	.read       = raw_pstore_read,
+	.open       = rawblk_open,
+	.read       = rawblk_read,
+	.close      = rawblk_close,
 	.write      = raw_pstore_write,
 	.erase      = NULL,
-	.open       = NULL,
-	.close      = NULL,
 	.flags      = PSTORE_TYPE_DMESG |
 	              PSTORE_TYPE_CONSOLE |
 	              PSTORE_TYPE_PMSG |
