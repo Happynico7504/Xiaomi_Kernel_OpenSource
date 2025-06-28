@@ -75,41 +75,33 @@ static int raw_pstore_read(struct pstore_record *record)
     struct pstore_raw_header *hdr;
     u32 id = record->id;
     loff_t block = PSTORE_DATA_OFFSET + id;
+    u32 count;
 
     bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
-if (!bh)
-    return -EIO;
+    if (!bh)
+        return -EIO;
 
-hdr = (struct pstore_raw_header *)bh->b_data;
+    hdr = (struct pstore_raw_header *)bh->b_data;
 
-u32 magic = le32_to_cpu(hdr->magic);
-u32 record_count = le32_to_cpu(hdr->record_count);
-    
-if (magic != PSTORE_RAW_MAGIC) {
-    brelse(bh);
-    return -EINVAL;
-}
+    pr_info("pstore_rawblk: magic=0x%08x count=%u id=%u\n",
+            hdr->magic, hdr->record_count, id);
 
-if (record_count == 0) {
-    brelse(bh);
-    return -ENODATA;
-}
-
-if (hdr->record_count > PSTORE_MAX_RECORDS) {
-    brelse(bh);
-    return -EINVAL;
-}
-
-if (id >= hdr->record_count) {
-    brelse(bh);
-    return -ENODATA;
-}
-
-    if (id >= hdr->record_count) {
+    if (hdr->magic != PSTORE_RAW_MAGIC) {
         brelse(bh);
-        return -ENODATA;
+        return -EINVAL;
     }
+
+    count = hdr->record_count;
     brelse(bh);
+
+    if (count == 0)
+        return -ENODATA;
+
+    if (count > PSTORE_MAX_RECORDS)
+        return -EINVAL;
+
+    if (id >= count)
+        return -ENODATA;
 
     bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
     if (!bh)
@@ -119,6 +111,7 @@ if (id >= hdr->record_count) {
     record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
     record->time = ns_to_timespec64(ktime_get_real_ns());
     record->id = id;
+    record->type = PSTORE_TYPE_CONSOLE;
 
     brelse(bh);
     return 0;
