@@ -8,7 +8,6 @@
 #include <linux/blkdev.h>
 #include <linux/pstore.h>
 #include <linux/buffer_head.h>
-#include <linux/pstore.h>
 
 #define PSTORE_RAW_MAGIC 0x50535242 // 'PSRB'
 #define PSTORE_BLOCK_SIZE 512
