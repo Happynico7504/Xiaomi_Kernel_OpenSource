@@ -147,8 +147,7 @@ static struct pstore_info raw_backend = {
          PSTORE_TYPE_CONSOLE |
          PSTORE_TYPE_PMSG |
          PSTORE_TYPE_FTRACE |
-         PSTORE_TYPE_MCE |
-
+         PSTORE_TYPE_MCE,
 };
 
 static int __init rawblk_init(void)
