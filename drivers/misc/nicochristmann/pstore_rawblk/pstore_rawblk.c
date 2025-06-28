@@ -36,36 +36,52 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
     struct page *page;
     loff_t block = PSTORE_DATA_OFFSET + id;
 
-    if (size > PSTORE_BLOCK_SIZE)
+    if (size > PSTORE_BLOCK_SIZE || id >= PSTORE_MAX_RECORDS)
         return -EINVAL;
+
+    bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
+    if (!bh)
+        return -EIO;
+
+    hdr = (struct pstore_raw_header *)bh->b_data;
+
+    if (hdr->magic != PSTORE_RAW_MAGIC) {
+        memset(hdr, 0, PSTORE_BLOCK_SIZE);
+        hdr->magic = PSTORE_RAW_MAGIC;
+        hdr->record_count = 0;
+        pr_info("pstore_rawblk: formatting header in write()\n");
+    }
+
+    if (hdr->record_count > PSTORE_MAX_RECORDS) {
+        brelse(bh);
+        return -EINVAL;
+    }
+
+    if (id == hdr->record_count)
+        hdr->record_count++;
+
+    mark_buffer_dirty(bh);
+    sync_dirty_buffer(bh);
+    brelse(bh);
 
     page = alloc_page(GFP_KERNEL);
     if (!page)
         return -ENOMEM;
 
     memcpy(page_address(page), data, size);
+
     bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
     if (!bh) {
         __free_page(page);
         return -EIO;
     }
+
     memcpy(bh->b_data, page_address(page), PSTORE_BLOCK_SIZE);
     mark_buffer_dirty(bh);
     sync_dirty_buffer(bh);
     brelse(bh);
     __free_page(page);
 
-    bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
-    if (bh) {
-        hdr = (struct pstore_raw_header *)bh->b_data;
-        if (hdr->magic != PSTORE_RAW_MAGIC)
-            hdr->magic = PSTORE_RAW_MAGIC;
-        if (id >= hdr->record_count && id < PSTORE_MAX_RECORDS)
-            hdr->record_count = id + 1;
-        mark_buffer_dirty(bh);
-        sync_dirty_buffer(bh);
-        brelse(bh);
-    }
     return size;
 }
 
