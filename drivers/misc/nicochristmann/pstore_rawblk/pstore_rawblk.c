@@ -39,23 +39,37 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
 	struct page *page;
 	loff_t block;
 
-	if (type >= PSTORE_TYPE_COUNT || id >= RECORDS_PER_TYPE || size > PSTORE_BLOCK_SIZE)
+	if (type >= PSTORE_TYPE_COUNT) {
+		pr_warn("pstore_rawblk: raw_write invalid type %d\n", type);
 		return -EINVAL;
+	}
+
+	if (id >= RECORDS_PER_TYPE) {
+		pr_warn("pstore_rawblk: raw_write invalid id %u\n", id);
+		return -EINVAL;
+	}
+
+	if (size > PSTORE_BLOCK_SIZE) {
+		pr_warn("pstore_rawblk: raw_write size %zu too large\n", size);
+		return -EINVAL;
+	}
 
 	pr_info("pstore_rawblk: write called, id=%u type=%d size=%zu\n", id, type, size);
 	
 	block = PSTORE_DATA_OFFSET + TYPE_BLOCK_OFFSET(type) + id;
 
 	bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
-	if (!bh)
+	if (!bh) {
+		pr_warn("pstore_rawblk: raw_write unable to read header block\n");
 		return -EIO;
+	}
 
 	hdr = (struct pstore_raw_header *)bh->b_data;
 
 	if (hdr->magic != PSTORE_RAW_MAGIC) {
+		pr_info("pstore_rawblk: formatting header in write()\n");
 		memset(hdr, 0, PSTORE_BLOCK_SIZE);
 		hdr->magic = PSTORE_RAW_MAGIC;
-		pr_info("pstore_rawblk: formatting header in write()\n");
 	}
 
 	if (hdr->record_count[type] <= id)
@@ -66,13 +80,16 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
 	brelse(bh);
 
 	page = alloc_page(GFP_KERNEL);
-	if (!page)
+	if (!page) {
+		pr_warn("pstore_rawblk: raw_write alloc_page failed\n");
 		return -ENOMEM;
+	}
 
 	memcpy(page_address(page), data, size);
 
 	bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
 	if (!bh) {
+		pr_warn("pstore_rawblk: raw_write unable to read data block %lld\n", block);
 		__free_page(page);
 		return -EIO;
 	}
@@ -94,21 +111,28 @@ static int raw_pstore_read(struct pstore_record *record)
 	enum pstore_type_id type = record->type;
 	loff_t block;
 
-	if (type >= PSTORE_TYPE_COUNT)
+	if (type >= PSTORE_TYPE_COUNT) {
+		pr_warn("pstore_rawblk: raw_pstore_read invalid type %d\n", type);
 		return -EINVAL;
+	}
 
 	bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
-	if (!bh)
+	if (!bh) {
+		pr_warn("pstore_rawblk: raw_pstore_read unable to read header block\n");
 		return -EIO;
+	}
 
 	hdr = (struct pstore_raw_header *)bh->b_data;
 
 	if (hdr->magic != PSTORE_RAW_MAGIC) {
+		pr_warn("pstore_rawblk: raw_pstore_read invalid magic 0x%x\n", hdr->magic);
 		brelse(bh);
 		return -EINVAL;
 	}
 
 	if (id >= hdr->record_count[type]) {
+		pr_warn("pstore_rawblk: raw_pstore_read record id %u out of range (count %u) for type %d\n",
+		        id, hdr->record_count[type], type);
 		brelse(bh);
 		return -ENODATA;
 	}
@@ -119,22 +143,47 @@ static int raw_pstore_read(struct pstore_record *record)
 	pr_info("pstore_rawblk: read called, id=%u type=%d\n", record->id, record->type);
 
 	bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
-	if (!bh)
+	if (!bh) {
+		pr_warn("pstore_rawblk: raw_pstore_read unable to read data block %lld\n", block);
 		return -EIO;
+	}
 
 	record->size = PSTORE_BLOCK_SIZE;
 	record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
+	if (!record->buf) {
+		pr_warn("pstore_rawblk: raw_pstore_read kmemdup failed\n");
+		brelse(bh);
+		return -ENOMEM;
+	}
 	record->time = ns_to_timespec64(ktime_get_real_ns());
 	record->compressed = false;
 	
 	brelse(bh);
-        return record->size;
-
+	return record->size;
 }
 
 static int raw_pstore_write(struct pstore_record *record)
 {
-	return raw_write(record->id, record->type, record->buf, record->size);
+	int ret;
+
+	if (!record) {
+		pr_warn("pstore_rawblk: raw_pstore_write called with NULL record\n");
+		return -EINVAL;
+	}
+	if (!record->buf) {
+		pr_warn("pstore_rawblk: raw_pstore_write record buf is NULL\n");
+		return -EINVAL;
+	}
+	if (record->size <= 0) {
+		pr_warn("pstore_rawblk: raw_pstore_write invalid size %zd\n", record->size);
+		return -EINVAL;
+	}
+
+	ret = raw_write(record->id, record->type, record->buf, record->size);
+	if (ret < 0) {
+		pr_warn("pstore_rawblk: raw_pstore_write raw_write failed with %d\n", ret);
+	}
+	return ret;
 }
 
 static struct pstore_info raw_backend = {
