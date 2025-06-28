@@ -42,6 +42,8 @@ static ssize_t raw_write(u32 id, enum pstore_type_id type,
 	if (type >= PSTORE_TYPE_COUNT || id >= RECORDS_PER_TYPE || size > PSTORE_BLOCK_SIZE)
 		return -EINVAL;
 
+	pr_info("pstore_rawblk: write called, id=%u type=%d size=%zu\n", id, type, size);
+	
 	block = PSTORE_DATA_OFFSET + TYPE_BLOCK_OFFSET(type) + id;
 
 	bh = __bread(bdev, PSTORE_HEADER_OFFSET, PSTORE_BLOCK_SIZE);
@@ -113,6 +115,8 @@ static int raw_pstore_read(struct pstore_record *record)
 
 	block = PSTORE_DATA_OFFSET + TYPE_BLOCK_OFFSET(type) + id;
 	brelse(bh);
+
+	pr_info("pstore_rawblk: read called, id=%u type=%d\n", record->id, record->type);
 
 	bh = __bread(bdev, block, PSTORE_BLOCK_SIZE);
 	if (!bh)
