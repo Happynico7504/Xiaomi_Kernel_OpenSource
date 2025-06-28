@@ -126,12 +126,10 @@ static int raw_pstore_read(struct pstore_record *record)
 	record->buf = kmemdup(bh->b_data, PSTORE_BLOCK_SIZE, GFP_KERNEL);
 	record->time = ns_to_timespec64(ktime_get_real_ns());
 	record->compressed = false;
-
+	
 	brelse(bh);
+        return record->size;
 
-	record->id = id + 1;
-
-	return 0;
 }
 
 static int raw_pstore_write(struct pstore_record *record)
