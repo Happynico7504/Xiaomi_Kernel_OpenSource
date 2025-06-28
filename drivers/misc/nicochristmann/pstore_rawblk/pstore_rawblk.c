@@ -148,7 +148,6 @@ static struct pstore_info raw_backend = {
          PSTORE_TYPE_PMSG |
          PSTORE_TYPE_FTRACE |
          PSTORE_TYPE_MCE |
-         PSTORE_TYPE_PANIC,
 
 };
 
