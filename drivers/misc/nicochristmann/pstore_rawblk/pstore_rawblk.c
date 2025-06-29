@@ -1,6 +1,3 @@
-// SPDX-License-Identifier: GPL-2.0
-// Raw pstore backend using a block device, per-type support
-
 #include <linux/module.h>
 #include <linux/kernel.h>
 #include <linux/init.h>
@@ -120,9 +117,9 @@ static void *rawblk_open(struct pstore_info *psi)
 	return ctx;
 }
 
-static int rawblk_read(struct pstore_record *record)
+static int rawblk_read(void *data, struct pstore_record *record)
 {
-	struct rawblk_context *ctx = record->private_data;
+	struct rawblk_context *ctx = data;
 	struct buffer_head *bh;
 	struct pstore_raw_header *hdr;
 	enum pstore_type_id type;
@@ -157,7 +154,6 @@ static int rawblk_read(struct pstore_record *record)
 			record->id = id;
 			record->time = ns_to_timespec64(ktime_get_real_ns());
 			record->compressed = false;
-			record->private_data = ctx;
 
 			brelse(bh);
 			return record->size;
