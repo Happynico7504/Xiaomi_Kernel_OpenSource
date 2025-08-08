@@ -1,16 +1,12 @@
 #include <linux/module.h>
-#include <linux/kernel.h>
-#include <linux/init.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/fb.h>
-#include <linux/of.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_gem_cma_helper.h>
 #include <drm/drm_fb_cma_helper.h>
-#include <drm/drm_gem.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_print.h>
 #include <drm/drm_modeset_helper.h>
@@ -29,7 +25,7 @@ static inline struct fbkms_device *drm_to_fbkms(struct drm_device *drm)
 }
 
 static const struct drm_mode_config_funcs fbkms_mode_config_funcs = {
-    .fb_create = NULL
+    .fb_create = drm_gem_cma_create,
 };
 
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
@@ -98,16 +94,6 @@ static const uint32_t fbkms_formats[] = {
     DRM_FORMAT_ARGB8888,
 };
 
-static struct drm_driver fbkms_driver = {
-    .driver_features = DRIVER_MODESET | DRIVER_GEM,
-    .name = "fbkms",
-    .desc = "Framebuffer -> KMS Bridge",
-    .date = "20250625",
-    .gem_free_object_unlocked = drm_gem_cma_free_object,
-    .dumb_create = drm_gem_cma_dumb_create,
-    .dumb_destroy = drm_gem_dumb_destroy,
-};
-
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
@@ -174,7 +160,7 @@ static int fbkms_probe(struct platform_device *pdev)
         dev_err(&pdev->dev, "fbkms: drm_dev_register failed: %d\n", ret);
         goto err_pipe;
     }
-  
+
     drm_kms_helper_poll_init(drm);
 
     dev_info(&pdev->dev, "fbkms: registered (using fbdev %s)\n", fbkms->fb->fix.id);
@@ -208,6 +194,16 @@ static int fbkms_remove(struct platform_device *pdev)
     return 0;
 }
 
+static struct drm_driver fbkms_driver = {
+    .driver_features = DRIVER_MODESET | DRIVER_GEM,
+    .name = "fbkms",
+    .desc = "Framebuffer -> KMS Bridge",
+    .date = "20250625",
+    .gem_free_object_unlocked = drm_gem_cma_free_object,
+    .dumb_create = drm_gem_cma_dumb_create,
+    .dumb_destroy = drm_gem_dumb_destroy,
+};
+
 static struct platform_driver fbkms_platform_driver = {
     .probe = fbkms_probe,
     .remove = fbkms_remove,
@@ -233,5 +229,5 @@ module_init(fbkms_init);
 module_exit(fbkms_exit);
 
 MODULE_AUTHOR("Nico Christmann");
-MODULE_DESCRIPTION("Framebuffer -> KMS Bridge Layer");
+MODULE_DESCRIPTION("Framebuffer -> KMS Bridge Layer with Atomic Support");
 MODULE_LICENSE("GPL");
