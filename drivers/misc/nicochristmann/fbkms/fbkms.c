@@ -14,7 +14,6 @@
 #include <drm/drm_print.h>
 #include <drm/drm_modeset_helper.h>
 #include <drm/drm_simple_kms_helper.h>
-#include <drm/drm_simple_kms.h>
 
 struct fbkms_device {
     struct drm_device drm;
