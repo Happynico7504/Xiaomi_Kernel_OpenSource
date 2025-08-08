@@ -12,7 +12,7 @@
 #include <drm/drm_gem.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_print.h>
-#include <drm/drm_probe_helper.h>
+#include <drm/drm_modeset_helper.h>
 #include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_simple_kms.h>
 
