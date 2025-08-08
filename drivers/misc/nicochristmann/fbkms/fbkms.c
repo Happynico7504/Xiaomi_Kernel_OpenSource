@@ -29,7 +29,7 @@ static inline struct fbkms_device *drm_to_fbkms(struct drm_device *drm)
 }
 
 static const struct drm_mode_config_funcs fbkms_mode_config_funcs = {
-    .fb_create = drm_fb_cma_create,
+    fb_create = NULL
 };
 
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
