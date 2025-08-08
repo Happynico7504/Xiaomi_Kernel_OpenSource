@@ -109,16 +109,17 @@ static int fbkms_probe(struct platform_device *pdev)
     struct fbkms_device *fbkms;
     struct fb_info *info = NULL;
     int ret;
-    int i;
     struct drm_device *drm;
+    struct device *dev = &pdev->dev;
 
-    dev_info(&pdev->dev, "fbkms: probe start\n");
+    dev_info(dev, "fbkms: probe start\n");
 
-    fbkms = devm_kzalloc(&pdev->dev, sizeof(*fbkms), GFP_KERNEL);
+    fbkms = devm_kzalloc(dev, sizeof(*fbkms), GFP_KERNEL);
     if (!fbkms)
         return -ENOMEM;
 
-    for (i = 0; i < FB_MAX; i++) {
+    // framebuffer suchen
+    for (int i = 0; i < FB_MAX; i++) {
         if (registered_fb[i] && registered_fb[i]->screen_base) {
             info = registered_fb[i];
             break;
@@ -126,15 +127,15 @@ static int fbkms_probe(struct platform_device *pdev)
     }
 
     if (!info) {
-        dev_err(&pdev->dev, "fbkms: no usable fbdev found\n");
+        dev_err(dev, "fbkms: no usable fbdev found\n");
         return -ENODEV;
     }
 
     fbkms->fb = info;
 
-    ret = drm_dev_init(&fbkms->drm, &fbkms_driver, &pdev->dev);
+    ret = drm_dev_init(&fbkms->drm, &fbkms_driver, dev);
     if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_dev_init failed: %d\n", ret);
+        dev_err(dev, "fbkms: drm_dev_init failed: %d\n", ret);
         return ret;
     }
 
@@ -143,11 +144,11 @@ static int fbkms_probe(struct platform_device *pdev)
     drm_mode_config_init(drm);
     drm->mode_config.min_width  = 1;
     drm->mode_config.min_height = 1;
-    drm->mode_config.max_width  = info->var.xres_virtual ?: 1920;
-    drm->mode_config.max_height = info->var.yres_virtual ?: 1080;
+    drm->mode_config.max_width  = info->var.xres_virtual ?: 3840;
+    drm->mode_config.max_height = info->var.yres_virtual ?: 2160;
     drm->mode_config.funcs = &fbkms_mode_config_funcs;
 
-    dev_info(&pdev->dev, "fbkms: mode_config initialized (max %ux%u)\n",
+    dev_info(dev, "fbkms: mode_config initialized (max %ux%u)\n",
              drm->mode_config.max_width, drm->mode_config.max_height);
 
     ret = drm_simple_display_pipe_init(drm,
@@ -157,10 +158,20 @@ static int fbkms_probe(struct platform_device *pdev)
                                        NULL,
                                        &fbkms->connector);
     if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_simple_display_pipe_init failed: %d\n", ret);
+        dev_err(dev, "fbkms: drm_simple_display_pipe_init failed: %d\n", ret);
         goto err_mode_config;
     }
 
+    drm_connector_helper_add(&fbkms->connector, &fbkms_conn_helper_funcs);
+
+    ret = drm_connector_attach_encoder(&fbkms->connector, &fbkms->pipe.encoder);
+    if (ret) {
+        dev_err(dev, "fbkms: drm_connector_attach_encoder failed: %d\n", ret);
+        goto err_pipe;
+    }
+
+    fbkms->connector.polled = DRM_CONNECTOR_POLL_CONNECT;
+    fbkms->connector.dpms = DRM_MODE_DPMS_ON;
     fbkms->connector.display_info.width_mm = 68;
     fbkms->connector.display_info.height_mm = 122;
 
@@ -168,13 +179,13 @@ static int fbkms_probe(struct platform_device *pdev)
 
     ret = drm_dev_register(drm, 0);
     if (ret) {
-        dev_err(&pdev->dev, "fbkms: drm_dev_register failed: %d\n", ret);
+        dev_err(dev, "fbkms: drm_dev_register failed: %d\n", ret);
         goto err_pipe;
     }
 
     drm_kms_helper_poll_init(drm);
 
-    dev_info(&pdev->dev, "fbkms: registered (using fbdev %s)\n", fbkms->fb->fix.id);
+    dev_info(dev, "fbkms: registered (using fbdev %s)\n", fbkms->fb->fix.id);
     return 0;
 
 err_pipe:
@@ -183,6 +194,7 @@ err_mode_config:
     drm_dev_put(drm);
     return ret;
 }
+
 
 static int fbkms_remove(struct platform_device *pdev)
 {
