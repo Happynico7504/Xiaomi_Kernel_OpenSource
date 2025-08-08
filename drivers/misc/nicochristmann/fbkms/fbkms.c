@@ -11,6 +11,8 @@
 #include <drm/drm_print.h>
 #include <drm/drm_modeset_helper.h>
 #include <drm/drm_simple_kms_helper.h>
+#include <drm/drm_atomic_helper.h>
+
 
 static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
 {
