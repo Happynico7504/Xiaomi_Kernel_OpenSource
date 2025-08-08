@@ -94,11 +94,22 @@ static const uint32_t fbkms_formats[] = {
     DRM_FORMAT_ARGB8888,
 };
 
+static struct drm_driver fbkms_driver = {
+    .driver_features = DRIVER_MODESET | DRIVER_GEM,
+    .name = "fbkms",
+    .desc = "Framebuffer -> KMS Bridge",
+    .date = "20250625",
+    .gem_free_object_unlocked = drm_gem_cma_free_object,
+    .dumb_create = drm_gem_cma_dumb_create,
+    .dumb_destroy = drm_gem_dumb_destroy,
+};
+
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
     struct fb_info *info = NULL;
     int ret;
+    int i;
     struct drm_device *drm;
 
     dev_info(&pdev->dev, "fbkms: probe start\n");
@@ -107,7 +118,7 @@ static int fbkms_probe(struct platform_device *pdev)
     if (!fbkms)
         return -ENOMEM;
 
-    for (int i = 0; i < FB_MAX; i++) {
+    for (i = 0; i < FB_MAX; i++) {
         if (registered_fb[i] && registered_fb[i]->screen_base) {
             info = registered_fb[i];
             break;
@@ -193,16 +204,6 @@ static int fbkms_remove(struct platform_device *pdev)
     dev_info(&pdev->dev, "fbkms: removed\n");
     return 0;
 }
-
-static struct drm_driver fbkms_driver = {
-    .driver_features = DRIVER_MODESET | DRIVER_GEM,
-    .name = "fbkms",
-    .desc = "Framebuffer -> KMS Bridge",
-    .date = "20250625",
-    .gem_free_object_unlocked = drm_gem_cma_free_object,
-    .dumb_create = drm_gem_cma_dumb_create,
-    .dumb_destroy = drm_gem_dumb_destroy,
-};
 
 static struct platform_driver fbkms_platform_driver = {
     .probe = fbkms_probe,
