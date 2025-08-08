@@ -80,13 +80,13 @@ static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
 
     memcpy(fbkms->fb->screen_base, src, copy_bytes);
 
-    drm_dbg_kms(drm, "fbkms: pipe enabled — copied %zu bytes to fbdev\n", copy_bytes);
+    dev_dbg(drm->dev, "fbkms: pipe enabled — copied %zu bytes to fbdev\n", copy_bytes);
 }
 
 static void fbkms_pipe_disable(struct drm_simple_display_pipe *pipe)
 {
     struct drm_device *drm = pipe->crtc.dev;
-    drm_dbg_kms(drm, "fbkms: pipe disabled\n");
+    dev_dbg(drm->dev, "fbkms: pipe disabled\n");
 }
 
 static const struct drm_simple_display_pipe_funcs fbkms_pipe_funcs = {
