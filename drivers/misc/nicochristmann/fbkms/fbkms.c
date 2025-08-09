@@ -15,7 +15,6 @@
 #include <drm/drm_print.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_modeset_helper.h>
-#include <drm/drm_kms_helper.h>
 #include <drm/drm_connector.h>
 #include <drm/drm_simple_kms_helper.h>
 
