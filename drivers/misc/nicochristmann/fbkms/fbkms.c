@@ -1,37 +1,23 @@
+/* SPDX-License-Identifier: GPL-2.0 */
 #include <linux/module.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
 #include <linux/fb.h>
+#include <linux/version.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_gem_cma_helper.h>
+/* Dein Kernel hat drm_fb_cma_helper.h, wir inkludieren es falls vorhanden */
 #include <drm/drm_fb_cma_helper.h>
+#include <drm/drm_gem.h>
 #include <drm/drm_modes.h>
 #include <drm/drm_print.h>
-#include <drm/drm_modeset_helper.h>
-#include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_atomic_helper.h>
-
-
-static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
-{
-    return connector_status_connected;
-}
-
-static const struct drm_connector_funcs fbkms_conn_funcs = {
-    .reset = drm_atomic_helper_connector_reset,
-    .detect = fbkms_detect,
-    .fill_modes = drm_helper_probe_single_connector_modes,
-    .destroy = drm_connector_cleanup,
-    .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
-    .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
-};
-
-static const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
-    .get_modes = drm_helper_probe_single_connector_modes,
-    .best_encoder = NULL,
-};
+#include <drm/drm_modeset_helper.h>
+#include <drm/drm_kms_helper.h>
+#include <drm/drm_connector.h>
+#include <drm/drm_simple_kms_helper.h>
 
 struct fbkms_device {
     struct drm_device drm;
@@ -45,20 +31,83 @@ static inline struct fbkms_device *drm_to_fbkms(struct drm_device *drm)
     return container_of(drm, struct fbkms_device, drm);
 }
 
-static const struct drm_mode_config_funcs fbkms_mode_config_funcs = {
-    .fb_create = NULL,
+/* --- Modes provider: erzeugt einen einfachen Mode basierend auf fbdev-Auflösung --- */
+static int fbkms_get_modes(struct drm_connector *connector)
+{
+    struct drm_display_mode tmp = { 0 };
+    struct drm_display_mode *mode;
+    struct drm_device *drm = connector->dev;
+    struct fbkms_device *fbkms = container_of(connector, struct fbkms_device, connector);
+    struct fb_info *info = fbkms->fb;
+    unsigned int h, v;
+
+    if (!info)
+        return 0;
+
+    /* benutze fbdev-Auflösung, falls vorhanden, sonst Fallback */
+    h = info->var.xres ?: 800;
+    v = info->var.yres ?: 600;
+
+    /* Fülle einen temporären mode struct und dupliziere ihn für das DRM-Core */
+    tmp.hdisplay = h;
+    tmp.hsync_start = h + 1;
+    tmp.hsync_end = h + 1;
+    tmp.htotal = h + 1;
+
+    tmp.vdisplay = v;
+    tmp.vsync_start = v + 1;
+    tmp.vsync_end = v + 1;
+    tmp.vtotal = v + 1;
+
+    tmp.type = DRM_MODE_TYPE_DRIVER | DRM_MODE_TYPE_PREFERRED;
+
+    /* setze den Namen (helper) */
+#if defined(drm_mode_set_name)
+    drm_mode_set_name(&tmp);
+#else
+    /* Falls drm_mode_set_name nicht vorhanden ist, setze kein Namenfeld */
+#endif
+
+    mode = drm_mode_duplicate(drm->dev, &tmp);
+    if (!mode)
+        return 0;
+
+    drm_mode_probed_add(connector, mode);
+    return 1;
+}
+
+/* --- Connector detect / funcs / helper funcs --- */
+static enum drm_connector_status fbkms_detect(struct drm_connector *connector, bool force)
+{
+    return connector_status_connected;
+}
+
+static const struct drm_connector_funcs fbkms_conn_funcs = {
+    .reset = drm_atomic_helper_connector_reset,
+    .detect = fbkms_detect,
+    /* .fill_modes ist älter; wir verwenden get_modes über helper funcs */
+    .fill_modes = NULL,
+    .destroy = drm_connector_cleanup,
+    .atomic_duplicate_state = drm_atomic_helper_connector_duplicate_state,
+    .atomic_destroy_state = drm_atomic_helper_connector_destroy_state,
 };
 
+static const struct drm_connector_helper_funcs fbkms_conn_helper_funcs = {
+    .get_modes = fbkms_get_modes,
+    .best_encoder = NULL,
+};
+
+/* --- simple display pipe callbacks --- */
 static void fbkms_pipe_enable(struct drm_simple_display_pipe *pipe,
                               struct drm_crtc_state *crtc_state,
                               struct drm_plane_state *plane_state)
 {
     struct drm_device *drm = pipe->crtc.dev;
     struct fbkms_device *fbkms = drm_to_fbkms(drm);
-    struct drm_framebuffer *fb = plane_state->fb;
+    struct drm_framebuffer *fb = plane_state ? plane_state->fb : NULL;
     struct drm_gem_cma_object *cma_obj;
-    void *src;
-    size_t copy_bytes;
+    void *src = NULL;
+    size_t copy_bytes = 0;
 
     if (!fb) {
         dev_err(drm->dev, "fbkms: enable called with no framebuffer\n");
@@ -115,6 +164,15 @@ static const uint32_t fbkms_formats[] = {
     DRM_FORMAT_ARGB8888,
 };
 
+/* --- mode_config funcs: kein fb_create (mtkfb stellt fbdev bereit) --- */
+static const struct drm_mode_config_funcs fbkms_mode_config_funcs = {
+    .fb_create = NULL,
+#if defined(drm_kms_helper_hotplug_event)
+    .output_poll_changed = drm_kms_helper_hotplug_event,
+#endif
+};
+
+/* --- drm_driver --- */
 static struct drm_driver fbkms_driver = {
     .driver_features = DRIVER_MODESET | DRIVER_GEM,
     .name = "fbkms",
@@ -125,11 +183,13 @@ static struct drm_driver fbkms_driver = {
     .dumb_destroy = drm_gem_dumb_destroy,
 };
 
+/* --- probe/remove --- */
 static int fbkms_probe(struct platform_device *pdev)
 {
     struct fbkms_device *fbkms;
     struct fb_info *info = NULL;
     int ret;
+    int i;
     struct drm_device *drm;
     struct device *dev = &pdev->dev;
 
@@ -139,8 +199,8 @@ static int fbkms_probe(struct platform_device *pdev)
     if (!fbkms)
         return -ENOMEM;
 
-    // framebuffer suchen
-    for (int i = 0; i < FB_MAX; i++) {
+    /* framebuffer suchen */
+    for (i = 0; i < FB_MAX; i++) {
         if (registered_fb[i] && registered_fb[i]->screen_base) {
             info = registered_fb[i];
             break;
@@ -192,7 +252,10 @@ static int fbkms_probe(struct platform_device *pdev)
     }
 
     fbkms->connector.polled = DRM_CONNECTOR_POLL_CONNECT;
+    /* dpms wird intern verwaltet, aber falls dein kernel es erwartet: */
+#if defined(DRM_MODE_DPMS_ON)
     fbkms->connector.dpms = DRM_MODE_DPMS_ON;
+#endif
     fbkms->connector.display_info.width_mm = 68;
     fbkms->connector.display_info.height_mm = 122;
 
@@ -215,7 +278,6 @@ err_mode_config:
     drm_dev_put(drm);
     return ret;
 }
-
 
 static int fbkms_remove(struct platform_device *pdev)
 {
@@ -243,7 +305,6 @@ static struct platform_driver fbkms_platform_driver = {
     .remove = fbkms_remove,
     .driver = {
         .name = "fbkms",
-        .owner = THIS_MODULE,
     },
 };
 
@@ -263,5 +324,5 @@ module_init(fbkms_init);
 module_exit(fbkms_exit);
 
 MODULE_AUTHOR("Nico Christmann");
-MODULE_DESCRIPTION("Framebuffer -> KMS Bridge Layer with Atomic Support");
+MODULE_DESCRIPTION("Framebuffer -> KMS Bridge Layer");
 MODULE_LICENSE("GPL");
