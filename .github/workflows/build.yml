@@ -10,7 +10,6 @@ jobs:
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
     - run: |
-        sudo chmod 755 custom-scripts/prepare-dkms-base.sh
         sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz 2> /dev/null || true
         sudo tar -xf ccache.tar.gz || true
         sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
@@ -62,14 +61,3 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
-
-    - run: "sudo custom-scripts/prepare-dkms-base.sh"
-
-    - uses: "marvinpinto/action-automatic-releases@latest"
-      with:
-        repo_token: "${{ secrets.GITHUB_TOKEN }}"
-        automatic_release_tag: "dkms-files"
-        prerelease: true
-        title: "DKMS Files ${{ env.SHORT_SHA }}"
-        files: |
-          dkms-base.tar.gz
