@@ -1,1 +1,0 @@
-obj-$(CONFIG_NICOCHRISTMANN_FBKMS) += fbkms.o

@@ -1,5 +1,0 @@
-config NICOCHRISTMANN_FBKMS
-
-tristate "Framebuffer Modesetting Driver"
-
-default n
