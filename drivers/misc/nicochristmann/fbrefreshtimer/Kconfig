@@ -1,0 +1,5 @@
+config NICOCHRISTMANN_FBREFRESHTIMER
+
+tristate "Timer Based Framebuffer Refresh"
+
+default y
