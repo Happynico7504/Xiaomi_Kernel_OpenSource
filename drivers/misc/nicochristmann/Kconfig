@@ -2,5 +2,5 @@ menu "Bonus Components by Nico Christmann"
 
 source "drivers/misc/nicochristmann/mtkmods/Kconfig"
 source "drivers/misc/nicochristmann/usbwifi/Kconfig"
-
+source "drivers/misc/nicochristmann/fbrefreshtimer/Kconfig"
 endmenu
