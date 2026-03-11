@@ -1,0 +1,1 @@
+obj-$(CONFIG_NICOCHRISTMANN_FBREFRESHTIMER) += fbrefreshtimer.o
