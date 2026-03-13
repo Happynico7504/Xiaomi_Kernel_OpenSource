@@ -1,0 +1,1 @@
+obj-$(CONFIG_NICOCHRISTMANN_VKMS_COPY) += vkms_copy.o
