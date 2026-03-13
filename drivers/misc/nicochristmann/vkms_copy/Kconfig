@@ -1,5 +1,0 @@
-config NICOCHRISTMANN_VKMS_COPY
-
-tristate "VKMS to FBDEV bridge"
-
-default m
