@@ -31,13 +31,14 @@ static void vkms_primary_plane_update(struct drm_plane *plane,
     out = drm_crtc_to_vkms_output(plane->crtc);
     fb = plane->state->fb;
 
-    obj = fb->obj[0]->driver_private; /* 4.19: vkms_gem_object wrapped */
+    /* 4.19: obj is already vkms_gem_object */
+    obj = (struct vkms_gem_object *) fb->obj[0];
     if (!obj || !obj->pages)
         return;
 
     npages = obj->gem.size / PAGE_SIZE;
 
-    /* unmap previous mapping if any */
+    /* unmap previous mapping */
     if (out->last_framebuffer)
         vunmap(out->last_framebuffer);
 
@@ -45,7 +46,6 @@ static void vkms_primary_plane_update(struct drm_plane *plane,
     if (!vaddr)
         return;
 
-    /* save last framebuffer info */
     out->last_framebuffer = vaddr;
     out->last_width  = fb->width;
     out->last_height = fb->height;
