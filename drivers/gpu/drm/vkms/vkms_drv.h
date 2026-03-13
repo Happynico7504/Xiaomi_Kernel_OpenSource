@@ -29,7 +29,7 @@ struct vkms_output {
     ktime_t period_ns;
     struct drm_pending_vblank_event *event;
 
-    /* patched: last frame info */
+    /* patched: kernel-mapped framebuffer */
     void *last_framebuffer;
     u32 last_width;
     u32 last_height;
