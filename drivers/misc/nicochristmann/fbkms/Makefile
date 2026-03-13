@@ -1,1 +1,1 @@
-obj-m += mini_kms.o
+obj-m += fbkms.o
