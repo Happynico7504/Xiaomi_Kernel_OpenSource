@@ -4,55 +4,58 @@
 #include <drm/drm_atomic_helper.h>
 #include <linux/slab.h>
 #include <linux/fb.h>
-#include <linux/uaccess.h>
 #include <linux/vmalloc.h>
 
 /* exported framebuffer info */
 void *vkms_last_framebuffer;
 EXPORT_SYMBOL(vkms_last_framebuffer);
-
 u32 vkms_last_width;
 EXPORT_SYMBOL(vkms_last_width);
-
 u32 vkms_last_height;
 EXPORT_SYMBOL(vkms_last_height);
-
 u32 vkms_last_pitch;
 EXPORT_SYMBOL(vkms_last_pitch);
 
-/* primary plane atomic update */
 static void vkms_primary_plane_update(struct drm_plane *plane,
                                       struct drm_plane_state *old_state)
 {
-    struct vkms_output *out = drm_crtc_to_vkms_output(plane->crtc);
+    struct vkms_output *out;
+    struct drm_framebuffer *fb;
     struct vkms_gem_object *obj;
-    void *vaddr = NULL;
+    void *vaddr;
     int npages;
 
-    if (!old_state || !plane->state || !plane->state->fb)
+    if (!plane || !plane->state || !plane->state->fb)
         return;
 
-    /* obtain GEM object of framebuffer */
-    obj = plane->state->fb->obj[0].driver_private;
-    if (!obj)
+    out = drm_crtc_to_vkms_output(plane->crtc);
+    fb = plane->state->fb;
+
+    obj = fb->obj[0]->driver_private; /* 4.19: vkms_gem_object wrapped */
+    if (!obj || !obj->pages)
         return;
 
-    /* map GEM pages to kernel virtual address */
     npages = obj->gem.size / PAGE_SIZE;
+
+    /* unmap previous mapping if any */
+    if (out->last_framebuffer)
+        vunmap(out->last_framebuffer);
+
     vaddr = vmap(obj->pages, npages, VM_MAP, PAGE_KERNEL);
     if (!vaddr)
         return;
 
-    /* update last framebuffer info */
+    /* save last framebuffer info */
     out->last_framebuffer = vaddr;
-    out->last_width  = plane->state->fb->width;
-    out->last_height = plane->state->fb->height;
-    out->last_pitch  = plane->state->fb->pitches[0];
+    out->last_width  = fb->width;
+    out->last_height = fb->height;
+    out->last_pitch  = fb->pitches[0];
 
     vkms_last_framebuffer = out->last_framebuffer;
     vkms_last_width = out->last_width;
     vkms_last_height = out->last_height;
     vkms_last_pitch = out->last_pitch;
+}
 
 /* plane helper functions */
 static const struct drm_plane_helper_funcs vkms_primary_helper_funcs = {
