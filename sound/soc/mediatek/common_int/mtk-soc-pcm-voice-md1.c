@@ -467,20 +467,8 @@ static struct snd_soc_component_driver mtk_soc_voice_component = {
 
 static int mtk_voice_probe(struct platform_device *pdev)
 {
-	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-
-	if (!pdev->dev.dma_mask)
-		pdev->dev.dma_mask = &pdev->dev.coherent_dma_mask;
-
-	if (pdev->dev.of_node)
-		dev_set_name(&pdev->dev, "%s", MT_SOC_VOICE_MD1);
-	pdev->name = pdev->dev.kobj.name;
-
-	pr_info("%s(), dev name %s\n", __func__, dev_name(&pdev->dev));
-	return snd_soc_register_component(&pdev->dev,
-					  &mtk_soc_voice_component,
-					  NULL,
-					  0);
+    pr_info("Voice MD1: blocked by custom patch\n");
+    return -ENODEV; // Gerät wird nicht registriert
 }
 
 static int mtk_voice_component_probe(struct snd_soc_component *component)
