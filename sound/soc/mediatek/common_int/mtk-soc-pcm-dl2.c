@@ -58,20 +58,19 @@ static int dl2_runtime_sanity(struct snd_pcm_substream *substream)
         return -EINVAL;
 
     if (!runtime->rate)
-        return -EINVAL;
+        runtime->rate = 44100;
 
     if (!runtime->channels)
-        return -EINVAL;
+        runtime->channels = 2;
 
     if (!Dl2_Playback_dma_buf)
-    return -ENOMEM;
+        return -ENOMEM;
 
-	if (!Dl2_Playback_dma_buf->area)
-    return -ENOMEM;
+    if (!Dl2_Playback_dma_buf->area)
+        return -ENOMEM;
 
     return 0;
 }
-
 static int fast_dl_hdoutput;
 static struct afe_mem_control_t *pMemControl;
 static struct snd_dma_buffer *Dl2_Playback_dma_buf;
