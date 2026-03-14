@@ -459,12 +459,6 @@ static struct snd_pcm_ops mtk_voice_ops = {
 	.page = mtk_pcm_page,
 };
 
-static struct snd_soc_component_driver mtk_soc_voice_component = {
-	.name = AFE_PCM_NAME,
-	.ops = &mtk_voice_ops,
-	.probe = mtk_voice_component_probe,
-};
-
 static int mtk_voice_probe(struct platform_device *pdev)
 {
     pr_info("Voice MD1: blocked by custom patch\n");
