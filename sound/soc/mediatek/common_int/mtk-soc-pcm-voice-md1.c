@@ -75,8 +75,6 @@ struct mtk_voice_property {
 
 static int mtk_voice_probe(struct platform_device *pdev);
 static int mtk_voice_close(struct snd_pcm_substream *substream);
-static int mtk_voice_component_probe(struct snd_soc_component *component);
-
 static bool Voice_Status;
 
 bool get_voice_status(void)
@@ -446,33 +444,10 @@ static int mtk_voice_hw_free(struct snd_pcm_substream *substream)
 	return snd_pcm_lib_free_pages(substream);
 }
 
-static struct snd_pcm_ops mtk_voice_ops = {
-	.open = mtk_voice_pcm_open,
-	.close = mtk_voice_close,
-	.ioctl = snd_pcm_lib_ioctl,
-	.hw_params = mtk_pcm_hw_params,
-	.hw_free = mtk_voice_hw_free,
-	.prepare = mtk_voice1_prepare,
-	.trigger = mtk_voice_trigger,
-	.copy_user = mtk_voice_pcm_copy,
-	.fill_silence = mtk_voice_pcm_silence,
-	.page = mtk_pcm_page,
-};
-
 static int mtk_voice_probe(struct platform_device *pdev)
 {
     pr_info("Voice MD1: blocked by custom patch\n");
     return -ENODEV; // Gerät wird nicht registriert
-}
-
-static int mtk_voice_component_probe(struct snd_soc_component *component)
-{
-	pr_info("%s()\n", __func__);
-
-	snd_soc_add_component_controls(component, mtk_voice_speech_controls,
-				      ARRAY_SIZE(mtk_voice_speech_controls));
-
-	return 0;
 }
 
 static int mtk_voice_remove(struct platform_device *pdev)
