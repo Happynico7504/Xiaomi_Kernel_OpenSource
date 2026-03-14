@@ -307,21 +307,8 @@ static struct snd_soc_component_driver mtk_soc_component = {
 
 static int mtk_mrgrx_awb_probe(struct platform_device *pdev)
 {
-	pr_debug("%s\n", __func__);
-
-	pdev->dev.coherent_dma_mask = DMA_BIT_MASK(32);
-	if (!pdev->dev.dma_mask)
-		pdev->dev.dma_mask = &pdev->dev.coherent_dma_mask;
-
-	if (pdev->dev.of_node)
-		dev_set_name(&pdev->dev, "%s", MT_SOC_MRGRX_AWB_PCM);
-	pdev->name = pdev->dev.kobj.name;
-
-	pr_debug("%s: dev name %s\n", __func__, dev_name(&pdev->dev));
-	return snd_soc_register_component(&pdev->dev,
-					  &mtk_soc_component,
-					  NULL,
-					  0);
+    pr_info("MRGRX AWB PCM: blocked by custom patch\n");
+    return -ENODEV; // Gerät wird nicht initialisiert
 }
 
 static int mtk_afe_mrgrx_awb_component_probe(struct snd_soc_component *component)
