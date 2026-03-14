@@ -63,11 +63,11 @@ static int dl2_runtime_sanity(struct snd_pcm_substream *substream)
     if (!runtime->channels)
         return -EINVAL;
 
-    if (!runtime->dma_area)
-        return -ENOMEM;
+    if (!Dl2_Playback_dma_buf)
+    return -ENOMEM;
 
-    if (!runtime->dma_addr)
-        return -ENOMEM;
+	if (!Dl2_Playback_dma_buf->area)
+    return -ENOMEM;
 
     return 0;
 }
@@ -297,7 +297,6 @@ static int mtk_pcm_dl2_params(struct snd_pcm_substream *substream,
 		return ret;
 	
 	/* struct snd_dma_buffer *dma_buf = &substream->dma_buffer; */
-	int ret = 0;
 
 	/* runtime->dma_bytes has to be set manually to allow mmap */
 	substream->runtime->dma_bytes = params_buffer_bytes(hw_params);
