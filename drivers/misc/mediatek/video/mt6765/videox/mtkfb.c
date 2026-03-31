@@ -632,8 +632,9 @@ static int mtkfb_pan_display_impl(struct fb_var_screeninfo *var,
 		input->src_fmt = DISP_FORMAT_RGB888;
 		break;
 	case 32:
-                input->src_fmt = DISP_FORMAT_RGBX8888;
-				input->alpha_enable = FALSE;
+                input->src_fmt =
+			(var->blue.offset == 0) ?
+			DISP_FORMAT_BGRA8888 : DISP_FORMAT_RGBX8888;
 		break;
 	default:
 		DISPWARN("Invalid color format bpp: %d\n", var->bits_per_pixel);
@@ -805,13 +806,12 @@ static int mtkfb_check_var(struct fb_var_screeninfo *var, struct fb_info *fbi)
 		ASSERT((var->red.offset + var->blue.offset) == 16);
 		ASSERT((var->red.offset == 16 || var->red.offset == 0));
 	} else if (bpp == 32) {
-        var->red.length = 8;
-        var->green.length = 8;
-        var->blue.length = 8;
+		var->red.length = var->green.length =
+			var->blue.length = var->transp.length = 8;
 
-        var->transp.length = 0;
-        var->transp.offset = 0;
-    }
+		ASSERT(var->red.offset + var->blue.offset == 16);
+		ASSERT((var->red.offset == 16 || var->red.offset == 0));
+	}
 
 	var->red.msb_right = var->green.msb_right =
 		var->blue.msb_right = var->transp.msb_right = 0;
@@ -875,9 +875,15 @@ static int mtkfb_set_par(struct fb_info *fbi)
 		break;
 
 	case 32:
-    	fb_layer.src_use_color_key = 0;
-    	fb_layer.src_fmt = MTK_FB_FORMAT_XRGB8888;
-    	break;
+		fb_layer.src_use_color_key = 0;
+		DISPDBG("set_par,var->blue.offset=%d\n", var->blue.offset);
+		if (var->red.offset == 0 && var->green.offset == 8 && var->blue.offset == 16 && var->transp.offset == 24)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_RGBA8888;
+                else if (var->blue.offset == 0)
+                    fb_layer.src_fmt = MTK_FB_FORMAT_ARGB8888;
+                else
+                    fb_layer.src_fmt = MTK_FB_FORMAT_BGRA8888;
+		break;
 
 	default:
 		fb_layer.src_fmt = MTK_FB_FORMAT_UNKNOWN;
