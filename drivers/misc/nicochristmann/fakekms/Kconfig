@@ -1,0 +1,17 @@
+config NICOCHRISTMANN_FAKEKMS
+
+tristate "Fake KMS driver on top of the first fbdev"
+
+depends on DRM
+
+select FB
+
+select DRM_KMS_HELPER
+
+default m
+
+help
+  Exposes a minimal atomic KMS device (one CRTC, plane and connector)
+  whose dumb buffers are copied into the first registered framebuffer
+  device, followed by a pan_display to make the fbdev driver show the
+  frame. Lets KMS-only userspace run on fbdev-only display drivers.
