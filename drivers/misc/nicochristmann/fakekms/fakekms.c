@@ -5,9 +5,15 @@
  * Exposes one CRTC/plane/connector. Dumb buffers live in vmalloc memory and
  * are copied into fb0 on every plane update or DIRTYFB call, then the fbdev
  * is panned so drivers like mtkfb actually push the frame to the panel.
+ *
+ * It also registers a render node and supports PRIME, so software renderers
+ * (Mesa kms_swrast) can allocate and share buffers here instead of picking
+ * another render node that has no dumb buffer support.
  */
 
 #include <linux/console.h>
+#include <linux/dma-buf.h>
+#include <linux/dma-mapping.h>
 #include <linux/fb.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
@@ -28,6 +34,7 @@
 #include <drm/drm_gem_framebuffer_helper.h>
 #include <drm/drm_ioctl.h>
 #include <drm/drm_modeset_helper_vtables.h>
+#include <drm/drm_prime.h>
 #include <drm/drm_simple_kms_helper.h>
 #include <drm/drm_vblank.h>
 
@@ -57,11 +64,13 @@ struct fakekms {
 static struct fakekms *fakekms_dev;
 static DEFINE_MUTEX(fakekms_probe_lock);
 
-/* ---- GEM: vmalloc backed dumb buffers ---- */
+/* ---- GEM: vmalloc backed buffers, shareable through PRIME ---- */
 
 struct fakekms_bo {
 	struct drm_gem_object base;
 	void *vaddr;
+	struct page **pages;
+	struct sg_table *sgt;	/* only set for imported buffers */
 };
 
 static inline struct fakekms_bo *to_fakekms_bo(struct drm_gem_object *obj)
@@ -73,35 +82,126 @@ static void fakekms_gem_free(struct drm_gem_object *obj)
 {
 	struct fakekms_bo *bo = to_fakekms_bo(obj);
 
+	if (bo->sgt) {
+		if (bo->vaddr)
+			vunmap(bo->vaddr);
+		/* not set yet if the import itself failed */
+		if (obj->import_attach)
+			drm_prime_gem_destroy(obj, bo->sgt);
+	} else {
+		vfree(bo->vaddr);
+	}
+	kvfree(bo->pages);
 	drm_gem_object_release(obj);
-	vfree(bo->vaddr);
 	kfree(bo);
+}
+
+/* returns an empty object, the caller fills in vaddr and pages */
+static struct fakekms_bo *fakekms_bo_alloc(struct drm_device *dev, size_t size)
+{
+	struct fakekms_bo *bo;
+	int ret;
+
+	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
+	if (!bo)
+		return ERR_PTR(-ENOMEM);
+
+	drm_gem_private_object_init(dev, &bo->base, size);
+
+	/* drm_gem_prime_mmap() needs the fake offset to exist */
+	ret = drm_gem_create_mmap_offset(&bo->base);
+	if (ret) {
+		drm_gem_object_put_unlocked(&bo->base);
+		return ERR_PTR(ret);
+	}
+
+	return bo;
 }
 
 static int fakekms_dumb_create(struct drm_file *file, struct drm_device *dev,
 			       struct drm_mode_create_dumb *args)
 {
+	unsigned int i, npages;
 	struct fakekms_bo *bo;
 	int ret;
 
 	args->pitch = DIV_ROUND_UP(args->width * args->bpp, 8);
 	args->size = PAGE_ALIGN((u64)args->pitch * args->height);
+	npages = args->size >> PAGE_SHIFT;
 
-	bo = kzalloc(sizeof(*bo), GFP_KERNEL);
-	if (!bo)
-		return -ENOMEM;
+	bo = fakekms_bo_alloc(dev, args->size);
+	if (IS_ERR(bo))
+		return PTR_ERR(bo);
 
 	bo->vaddr = vmalloc_user(args->size);
-	if (!bo->vaddr) {
-		kfree(bo);
-		return -ENOMEM;
+	bo->pages = kvcalloc(npages, sizeof(*bo->pages), GFP_KERNEL);
+	if (!bo->vaddr || !bo->pages) {
+		ret = -ENOMEM;
+		goto out;
 	}
 
-	drm_gem_private_object_init(dev, &bo->base, args->size);
+	for (i = 0; i < npages; i++)
+		bo->pages[i] = vmalloc_to_page(bo->vaddr + i * PAGE_SIZE);
 
 	ret = drm_gem_handle_create(file, &bo->base, &args->handle);
+out:
 	drm_gem_object_put_unlocked(&bo->base);
 	return ret;
+}
+
+static struct sg_table *fakekms_gem_get_sg_table(struct drm_gem_object *obj)
+{
+	struct fakekms_bo *bo = to_fakekms_bo(obj);
+
+	return drm_prime_pages_to_sg(bo->pages, obj->size >> PAGE_SHIFT);
+}
+
+static struct drm_gem_object *
+fakekms_gem_import_sg_table(struct drm_device *dev,
+			    struct dma_buf_attachment *attach,
+			    struct sg_table *sgt)
+{
+	size_t size = PAGE_ALIGN(attach->dmabuf->size);
+	unsigned int npages = size >> PAGE_SHIFT;
+	struct fakekms_bo *bo;
+	int ret;
+
+	bo = fakekms_bo_alloc(dev, size);
+	if (IS_ERR(bo))
+		return ERR_CAST(bo);
+	bo->sgt = sgt;
+
+	bo->pages = kvcalloc(npages, sizeof(*bo->pages), GFP_KERNEL);
+	if (!bo->pages) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	ret = drm_prime_sg_to_page_addr_arrays(sgt, bo->pages, NULL, npages);
+	if (ret)
+		goto err;
+
+	bo->vaddr = vmap(bo->pages, npages, VM_MAP, PAGE_KERNEL);
+	if (!bo->vaddr) {
+		ret = -ENOMEM;
+		goto err;
+	}
+
+	return &bo->base;
+
+err:
+	drm_gem_object_put_unlocked(&bo->base);
+	return ERR_PTR(ret);
+}
+
+static void *fakekms_gem_vmap(struct drm_gem_object *obj)
+{
+	return to_fakekms_bo(obj)->vaddr;
+}
+
+static void fakekms_gem_vunmap(struct drm_gem_object *obj, void *vaddr)
+{
+	/* mapped for the whole lifetime of the object */
 }
 
 static const struct vm_operations_struct fakekms_gem_vm_ops = {
@@ -111,6 +211,7 @@ static const struct vm_operations_struct fakekms_gem_vm_ops = {
 
 static int fakekms_mmap(struct file *filp, struct vm_area_struct *vma)
 {
+	unsigned long i, npages = vma_pages(vma);
 	struct fakekms_bo *bo;
 	int ret;
 
@@ -125,10 +226,17 @@ static int fakekms_mmap(struct file *filp, struct vm_area_struct *vma)
 	vma->vm_page_prot = vm_get_page_prot(vma->vm_flags);
 	vma->vm_pgoff = 0;
 
-	ret = remap_vmalloc_range(vma, bo->vaddr, 0);
-	if (ret)
-		drm_gem_vm_close(vma);
-	return ret;
+	/* works for both vmalloc and imported pages, unlike remap_vmalloc_range */
+	for (i = 0; i < npages; i++) {
+		ret = vm_insert_page(vma, vma->vm_start + i * PAGE_SIZE,
+				     bo->pages[i]);
+		if (ret) {
+			drm_gem_vm_close(vma);
+			return ret;
+		}
+	}
+
+	return 0;
 }
 
 /* ---- copying into the fbdev ---- */
@@ -409,11 +517,21 @@ static const struct file_operations fakekms_fops = {
 };
 
 static struct drm_driver fakekms_driver = {
-	.driver_features = DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC,
+	.driver_features = DRIVER_GEM | DRIVER_MODESET | DRIVER_ATOMIC |
+			   DRIVER_PRIME | DRIVER_RENDER,
 	.gem_free_object_unlocked = fakekms_gem_free,
 	.gem_vm_ops = &fakekms_gem_vm_ops,
 	.dumb_create = fakekms_dumb_create,
 	.dumb_map_offset = drm_gem_dumb_map_offset,
+	.prime_handle_to_fd = drm_gem_prime_handle_to_fd,
+	.prime_fd_to_handle = drm_gem_prime_fd_to_handle,
+	.gem_prime_export = drm_gem_prime_export,
+	.gem_prime_import = drm_gem_prime_import,
+	.gem_prime_get_sg_table = fakekms_gem_get_sg_table,
+	.gem_prime_import_sg_table = fakekms_gem_import_sg_table,
+	.gem_prime_vmap = fakekms_gem_vmap,
+	.gem_prime_vunmap = fakekms_gem_vunmap,
+	.gem_prime_mmap = drm_gem_prime_mmap,
 	.fops = &fakekms_fops,
 	.name = DRIVER_NAME,
 	.desc = "Fake KMS on top of fbdev",
@@ -462,6 +580,12 @@ static void fakekms_add_format(struct fakekms *fk, u32 format)
 	fk->formats[fk->num_formats++] = format;
 }
 
+static const struct platform_device_info fakekms_pdev_info = {
+	.name = DRIVER_NAME,
+	.id = PLATFORM_DEVID_NONE,
+	.dma_mask = DMA_BIT_MASK(64),
+};
+
 static int fakekms_attach(struct fb_info *info)
 {
 	struct drm_mode_config *config;
@@ -475,9 +599,12 @@ static int fakekms_attach(struct fb_info *info)
 		return -EINVAL;
 	}
 
-	pdev = platform_device_register_simple(DRIVER_NAME, -1, NULL, 0);
+	pdev = platform_device_register_full(&fakekms_pdev_info);
 	if (IS_ERR(pdev))
 		return PTR_ERR(pdev);
+
+	/* a bare platform device only gets dummy DMA ops, PRIME import needs real ones */
+	arch_setup_dma_ops(&pdev->dev, 0, DMA_BIT_MASK(64), NULL, false);
 
 	drm = drm_dev_alloc(&fakekms_driver, &pdev->dev);
 	if (IS_ERR(drm)) {
