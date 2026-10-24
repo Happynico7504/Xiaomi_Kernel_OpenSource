@@ -1,0 +1,36 @@
+#!/bin/sh
+# Copy /vendor/firmware into the initramfs. Built-in MTK drivers (WMT,
+# touch, PowerVR) request their firmware before the real root is mounted,
+# and the kernel's firmware loader looks in /vendor/firmware first.
+#
+# Install to /etc/initramfs-tools/hooks/vendor-firmware (mode 755) and run
+# update-initramfs -u.
+
+PREREQ=""
+
+prereqs()
+{
+	echo "$PREREQ"
+}
+
+case "$1" in
+prereqs)
+	prereqs
+	exit 0
+	;;
+esac
+
+. /usr/share/initramfs-tools/hook-functions
+
+FW_DIR=/vendor/firmware
+
+if [ ! -d "$FW_DIR" ]; then
+	echo "W: vendor-firmware: $FW_DIR not found, skipping" >&2
+	exit 0
+fi
+
+find "$FW_DIR" \( -type f -o -type l \) | while read -r fw; do
+	copy_file firmware "$fw" || true
+done
+
+exit 0
