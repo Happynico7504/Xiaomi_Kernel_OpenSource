@@ -31,8 +31,10 @@ jobs:
         mkdir build-out
         sudo mv .config build-out/.config
     - run: "sudo USE_CCACHE=1 CCACHE_DIR=/home/runner/work/Xiaomi_Kernel_OpenSource/Xiaomi_Kernel_OpenSource/ccache PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) KBUILD_OUTPUT=build-out CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -j$(($(nproc) * 4)) || true"
-    - run: "sudo cp $(sudo find -iname *.ko) modules || true"
-    - run: "sudo tar -c modules | gzip -9 > modules.tar.gz || true"
+    - run: "sudo USE_CCACHE=1 CCACHE_DIR=/home/runner/work/Xiaomi_Kernel_OpenSource/Xiaomi_Kernel_OpenSource/ccache PATH=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin:$PATH COMPILERSETTINGS=\"\" LINKERSETTNGS=\"-z nodefs\" ARCH=arm64 ARCH_MTK_PLATFORM=mt6761 CROSS_COMPILE=aarch64-linux-gnu- LLVM=1 KERNEL_DIR=$(pwd) KBUILD_OUTPUT=build-out CLANG_PREBUILT_BIN=$(pwd)/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin LINUX_GCC_CROSS_COMPILE_PREBUILTS_BIN=/usr/bin CC=clang LD=ld.lld LLVM_LD=ld.lld AR=llvm-ar NM=llvm-nm OBJCOPY=llvm-objcopy OBJDUMP=llvm-objdump READELF=llvm-readelf OBJSIZE=llvm-size STRIP=llvm-strip make -k INSTALL_MOD_PATH=$(pwd)/modinst modules_install || true"
+    - run: "sudo rm -f modinst/lib/modules/*/build modinst/lib/modules/*/source || true"
+    - run: "for d in modinst/lib/modules/*/; do sudo touch $d/modules.builtin.modinfo; done || true"
+    - run: "sudo tar -C modinst -c lib | gzip -9 > modules.tar.gz || true"
     - run: "sudo cat build-out/.config | gzip -9 > config.gz || true"
     - run: "sudo rm ccache.tar.gz || true"
     - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
