@@ -11,6 +11,7 @@
  * another render node that has no dumb buffer support.
  */
 
+#include <linux/backlight.h>
 #include <linux/console.h>
 #include <linux/dma-buf.h>
 #include <linux/dma-mapping.h>
@@ -55,7 +56,7 @@ struct fakekms {
 	struct fb_info *info;
 	bool enabled;
 	u8 *linebuf;
-	enum led_brightness backlight;	/* restored when the pipe comes back */
+	struct backlight_device *backlight;
 
 	unsigned int width, height;
 	u32 native_format;	/* 0 if the fbdev layout has no DRM fourcc */
@@ -346,21 +347,23 @@ static void fakekms_unblank(struct fb_info *info)
 }
 
 /*
- * The panel backlight is a LED that Android's power manager turns back on
- * after the panel resumes. Nothing does that on a plain Linux userspace.
+ * The panel backlight is a LED that Android's power manager drives. Wrap it
+ * in a backlight device so desktops can control it, and so the backlight
+ * core turns it off and back on with the panel (it follows fb blank events).
  */
 #define FAKEKMS_BACKLIGHT	"lcd-backlight"
+#define FAKEKMS_BRIGHTNESS	512	/* at boot */
 
 extern struct rw_semaphore leds_list_lock;
 extern struct list_head leds_list;
 
-static struct led_classdev *fakekms_backlight(void)
+static struct led_classdev *fakekms_find_led(const char *name)
 {
 	struct led_classdev *led, *found = NULL;
 
 	down_read(&leds_list_lock);
 	list_for_each_entry(led, &leds_list, node) {
-		if (!strcmp(led->name, FAKEKMS_BACKLIGHT)) {
+		if (!strcmp(led->name, name)) {
 			found = led;
 			break;
 		}
@@ -369,22 +372,60 @@ static struct led_classdev *fakekms_backlight(void)
 	return found;
 }
 
-/* caller holds fakekms_lock() */
-static void fakekms_save_backlight(struct fakekms *fk)
+static int fakekms_bl_update_status(struct backlight_device *bd)
 {
-	struct led_classdev *led = fakekms_backlight();
+	struct led_classdev *led = bl_get_data(bd);
+	int brightness = bd->props.brightness;
 
-	if (led && led->brightness)
-		fk->backlight = led->brightness;
+	if (bd->props.power != FB_BLANK_UNBLANK ||
+	    bd->props.fb_blank != FB_BLANK_UNBLANK ||
+	    bd->props.state & (BL_CORE_SUSPENDED | BL_CORE_FBBLANK))
+		brightness = 0;
+
+	led_set_brightness(led, brightness);
+	return 0;
 }
 
-/* caller holds fakekms_lock() */
-static void fakekms_restore_backlight(struct fakekms *fk)
+static int fakekms_bl_check_fb(struct backlight_device *bd, struct fb_info *info)
 {
-	struct led_classdev *led = fakekms_backlight();
+	return info->node == 0;
+}
 
-	if (led && !led->brightness)
-		led_set_brightness(led, fk->backlight ?: led->max_brightness / 2);
+static const struct backlight_ops fakekms_bl_ops = {
+	.update_status = fakekms_bl_update_status,
+	.check_fb = fakekms_bl_check_fb,
+};
+
+static void fakekms_backlight_init(struct fakekms *fk)
+{
+	struct backlight_properties props = {
+		.type = BACKLIGHT_RAW,
+		.power = FB_BLANK_UNBLANK,
+	};
+	struct backlight_device *bd;
+	struct led_classdev *led;
+
+	led = fakekms_find_led(FAKEKMS_BACKLIGHT);
+	if (!led) {
+		DRM_INFO("fakekms: no %s LED, no backlight control\n",
+			 FAKEKMS_BACKLIGHT);
+		return;
+	}
+
+	props.max_brightness = led->max_brightness;
+	props.brightness = min_t(int, FAKEKMS_BRIGHTNESS, led->max_brightness);
+
+	/* parented to the connector so desktops can match it to the panel */
+	bd = backlight_device_register("fakekms-backlight", fk->connector.kdev,
+				       led, &fakekms_bl_ops, &props);
+	if (IS_ERR(bd)) {
+		DRM_ERROR("fakekms: backlight registration failed: %ld\n",
+			  PTR_ERR(bd));
+		return;
+	}
+
+	fk->backlight = bd;
+	backlight_update_status(bd);
 }
 
 /* caller holds fakekms_lock() */
@@ -489,7 +530,6 @@ static void fakekms_pipe_enable(struct drm_simple_display_pipe *pipe,
 	if (fk->info)
 		fakekms_unblank(fk->info);
 	fakekms_flush_locked(fk, plane_state);
-	fakekms_restore_backlight(fk);
 	fakekms_unlock(fk);
 }
 
@@ -499,7 +539,6 @@ static void fakekms_pipe_disable(struct drm_simple_display_pipe *pipe)
 
 	fakekms_lock(fk);
 	fk->enabled = false;
-	fakekms_save_backlight(fk);
 	if (fk->info)
 		fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
 	fakekms_unlock(fk);
@@ -708,7 +747,7 @@ static int fakekms_attach(struct fb_info *info)
 
 	drm_connector_helper_add(&fk->connector, &fakekms_conn_helper_funcs);
 	ret = drm_connector_init(drm, &fk->connector, &fakekms_conn_funcs,
-				 DRM_MODE_CONNECTOR_Unknown);
+				 DRM_MODE_CONNECTOR_DSI);
 	if (ret)
 		goto err_config;
 	fk->connector.display_info.width_mm = info->var.width;
@@ -725,6 +764,8 @@ static int fakekms_attach(struct fb_info *info)
 	ret = drm_dev_register(drm, 0);
 	if (ret)
 		goto err_config;
+
+	fakekms_backlight_init(fk);
 
 	fakekms_dev = fk;
 	DRM_INFO("fakekms: %ux%u on fb%d (%s)\n", fk->width, fk->height,
@@ -750,6 +791,7 @@ static void fakekms_detach(void)
 	if (!fk)
 		return;
 
+	backlight_device_unregister(fk->backlight);
 	drm_dev_unregister(fk->drm);
 	drm_atomic_helper_shutdown(fk->drm);
 	drm_mode_config_cleanup(fk->drm);
