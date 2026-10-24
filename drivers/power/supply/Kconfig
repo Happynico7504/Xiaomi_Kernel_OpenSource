@@ -686,6 +686,15 @@ config BATTERY_MT6359
 	  battery information , It issues interrupt when trigger
 	  threshold is met.
 
+config MTK_BATTERY_KERNEL_ALGO
+	bool "Run the fuel gauge algorithm in the kernel"
+	depends on BATTERY_MT6357 || BATTERY_MT6359
+	help
+	  On Android the fuel gauge algorithm runs in the fuelgauged daemon,
+	  and the kernel only runs it itself in recovery mode. Say Y when
+	  there is no fuelgauged, such as with a regular Linux userspace, so
+	  the battery percentage is calculated in the kernel on every boot.
+
 config CHARGER_MT6360
 	tristate "Mediatek MT6360 Charger Driver"
 	depends on MFD_MT6360

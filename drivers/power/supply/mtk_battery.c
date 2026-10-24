@@ -3475,7 +3475,8 @@ int battery_init(struct platform_device *pdev)
 	ret = mtk_battery_daemon_init(pdev);
 	b_recovery_mode = is_recovery_mode();
 
-	if (ret == 0 && b_recovery_mode == 0)
+	if (ret == 0 && b_recovery_mode == 0 &&
+	    !IS_ENABLED(CONFIG_MTK_BATTERY_KERNEL_ALGO))
 		bm_err("[%s]: daemon mode DONE\n", __func__);
 	else {
 		gm->algo.active = true;
