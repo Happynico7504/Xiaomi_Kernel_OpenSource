@@ -36,6 +36,7 @@ jobs:
     - run: "for d in modinst/lib/modules/*/; do sudo touch $d/modules.builtin.modinfo; done || true"
     - run: "sudo tar -C modinst -c lib | gzip -9 > modules.tar.gz || true"
     - run: "sudo cat build-out/.config | gzip -9 > config.gz || true"
+    - run: "sudo sh custom-scripts/package-headers.sh build-out || true"
     - run: "sudo rm ccache.tar.gz || true"
     - run: "sudo tar -c ccache | gzip -9 > ccache.tar.gz || true"
     - run: |
@@ -43,6 +44,7 @@ jobs:
         sudo sha512sum build-out/System.map > build-out/System.map.sha512 || true
         sudo sha512sum config.gz > config.gz.sha512 || true
         sudo sha512sum modules.tar.gz > modules.tar.gz.sha512 || true
+        sudo sha512sum headers.tar.gz > headers.tar.gz.sha512 || true
         sudo sha512sum ccache.tar.gz > ccache.tar.gz.sha512 || true
     - run: "[ ! -s build-out/System.map.sha512 ] && sudo rm build-out/System.map.sha512 || true"
     - run: "[ ! -s build-out/arch/arm64/boot/Image.gz.sha512 ] && sudo rm build-out/arch/arm64/boot/Image.gz.sha512 || true"
@@ -63,3 +65,5 @@ jobs:
           config.gz.sha512
           modules.tar.gz
           modules.tar.gz.sha512
+          headers.tar.gz
+          headers.tar.gz.sha512
