@@ -352,7 +352,7 @@ static void fakekms_unblank(struct fb_info *info)
  * core turns it off and back on with the panel (it follows fb blank events).
  */
 #define FAKEKMS_BACKLIGHT	"lcd-backlight"
-#define FAKEKMS_BRIGHTNESS	512	/* at boot */
+#define FAKEKMS_BRIGHTNESS	512	/* at boot, and on wake if it was 0 */
 
 extern struct rw_semaphore leds_list_lock;
 extern struct list_head leds_list;
@@ -519,6 +519,24 @@ fakekms_pipe_mode_valid(struct drm_crtc *crtc, const struct drm_display_mode *mo
 	return MODE_OK;
 }
 
+/*
+ * The panel resume can leave the LED off, and a desktop may have dimmed to 0
+ * before blanking, so make sure the panel comes back lit.
+ * caller holds fakekms_lock()
+ */
+static void fakekms_wake_backlight(struct fakekms *fk)
+{
+	struct backlight_device *bd = fk->backlight;
+
+	if (!bd)
+		return;
+
+	if (!bd->props.brightness)
+		bd->props.brightness = min_t(int, FAKEKMS_BRIGHTNESS,
+					     bd->props.max_brightness);
+	backlight_update_status(bd);
+}
+
 static void fakekms_pipe_enable(struct drm_simple_display_pipe *pipe,
 				struct drm_crtc_state *crtc_state,
 				struct drm_plane_state *plane_state)
@@ -530,6 +548,7 @@ static void fakekms_pipe_enable(struct drm_simple_display_pipe *pipe,
 	if (fk->info)
 		fakekms_unblank(fk->info);
 	fakekms_flush_locked(fk, plane_state);
+	fakekms_wake_backlight(fk);
 	fakekms_unlock(fk);
 }
 
