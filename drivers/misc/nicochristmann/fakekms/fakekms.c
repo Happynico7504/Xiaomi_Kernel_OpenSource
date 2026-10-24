@@ -17,6 +17,7 @@
 #include <linux/fb.h>
 #include <linux/io.h>
 #include <linux/kernel.h>
+#include <linux/leds.h>
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/mutex.h>
@@ -54,6 +55,7 @@ struct fakekms {
 	struct fb_info *info;
 	bool enabled;
 	u8 *linebuf;
+	enum led_brightness backlight;	/* restored when the pipe comes back */
 
 	unsigned int width, height;
 	u32 native_format;	/* 0 if the fbdev layout has no DRM fourcc */
@@ -328,6 +330,63 @@ static void fakekms_blank(struct fb_info *info, int blank)
 	}
 }
 
+/*
+ * mtkfb's pan doesn't set up the display layer, it only triggers a refresh
+ * of the existing one, and that is gone once the panel was powered down.
+ * set_par configures it again like at boot.
+ */
+static void fakekms_unblank(struct fb_info *info)
+{
+	if (lock_fb_info(info)) {
+		fb_blank(info, FB_BLANK_UNBLANK);
+		if (info->fbops->fb_set_par)
+			info->fbops->fb_set_par(info);
+		unlock_fb_info(info);
+	}
+}
+
+/*
+ * The panel backlight is a LED that Android's power manager turns back on
+ * after the panel resumes. Nothing does that on a plain Linux userspace.
+ */
+#define FAKEKMS_BACKLIGHT	"lcd-backlight"
+
+extern struct rw_semaphore leds_list_lock;
+extern struct list_head leds_list;
+
+static struct led_classdev *fakekms_backlight(void)
+{
+	struct led_classdev *led, *found = NULL;
+
+	down_read(&leds_list_lock);
+	list_for_each_entry(led, &leds_list, node) {
+		if (!strcmp(led->name, FAKEKMS_BACKLIGHT)) {
+			found = led;
+			break;
+		}
+	}
+	up_read(&leds_list_lock);
+	return found;
+}
+
+/* caller holds fakekms_lock() */
+static void fakekms_save_backlight(struct fakekms *fk)
+{
+	struct led_classdev *led = fakekms_backlight();
+
+	if (led && led->brightness)
+		fk->backlight = led->brightness;
+}
+
+/* caller holds fakekms_lock() */
+static void fakekms_restore_backlight(struct fakekms *fk)
+{
+	struct led_classdev *led = fakekms_backlight();
+
+	if (led && !led->brightness)
+		led_set_brightness(led, fk->backlight ?: led->max_brightness / 2);
+}
+
 /* caller holds fakekms_lock() */
 static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *state)
 {
@@ -428,8 +487,9 @@ static void fakekms_pipe_enable(struct drm_simple_display_pipe *pipe,
 	fakekms_lock(fk);
 	fk->enabled = true;
 	if (fk->info)
-		fakekms_blank(fk->info, FB_BLANK_UNBLANK);
+		fakekms_unblank(fk->info);
 	fakekms_flush_locked(fk, plane_state);
+	fakekms_restore_backlight(fk);
 	fakekms_unlock(fk);
 }
 
@@ -439,6 +499,7 @@ static void fakekms_pipe_disable(struct drm_simple_display_pipe *pipe)
 
 	fakekms_lock(fk);
 	fk->enabled = false;
+	fakekms_save_backlight(fk);
 	if (fk->info)
 		fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
 	fakekms_unlock(fk);
