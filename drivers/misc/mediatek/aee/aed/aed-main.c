@@ -71,6 +71,9 @@ static int aee_force_exp = AEE_FORCE_EXP_NOT_SET;
 /* use ke_log_available to control aed_ke_poll */
 static int ke_log_available = 1;
 
+/* aee_aed instances that have the KE device open */
+static atomic_t ke_readers = ATOMIC_INIT(0);
+
 static struct proc_dir_entry *aed_proc_dir;
 
 static DECLARE_RWSEM(ee_rw_ops_sem);
@@ -563,6 +566,14 @@ static int ke_gen_ind_msg(struct aee_oops *oops)
 		return -1;
 	}
 	spin_unlock_irqrestore(&aed_device_lock, flags);
+
+	/*
+	 * Without aee_aed (no Android userspace) nobody collects the log and
+	 * the wait below would hold this system_wq worker for 5 minutes per
+	 * report, stalling every flush_scheduled_work() meanwhile.
+	 */
+	if (!atomic_read(&ke_readers))
+		return 0;
 
 	if (aed_dev.kerec.lastlog) {
 		struct AE_Msg *rep_msg;
@@ -1140,6 +1151,7 @@ static int aed_ke_open(struct inode *inode, struct file *filp)
 	minor = MINOR(inode->i_rdev);
 	devname = filp->f_path.dentry->d_iname;
 	pr_debug("%s:(%s)%d:%d\n", __func__, devname, major, minor);
+	atomic_inc(&ke_readers);
 	return 0;
 }
 
@@ -1147,6 +1159,7 @@ static int aed_ke_release(struct inode *inode, struct file *filp)
 {
 	pr_debug("%s:%d:%d\n", __func__, MAJOR(inode->i_rdev),
 			MINOR(inode->i_rdev));
+	atomic_dec(&ke_readers);
 	return 0;
 }
 
