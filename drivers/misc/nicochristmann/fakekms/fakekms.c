@@ -534,6 +534,14 @@ static void fakekms_wake_backlight(struct fakekms *fk)
 	if (!bd->props.brightness)
 		bd->props.brightness = min_t(int, FAKEKMS_BRIGHTNESS,
 					     bd->props.max_brightness);
+
+	/*
+	 * MTK's LED driver only acts on a changed level, but it records
+	 * levels the display driver rejected while the panel slept (e.g.
+	 * across suspend to RAM). Go through 0 so the real level is
+	 * applied now that the panel is up.
+	 */
+	led_set_brightness(bl_get_data(bd), 0);
 	backlight_update_status(bd);
 }
 
