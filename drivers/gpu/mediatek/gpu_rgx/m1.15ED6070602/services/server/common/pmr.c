@@ -3356,6 +3356,12 @@ PMRUnwritePMPageList(PMR_PAGELIST *psPageList)
 {
 	PVRSRV_ERROR eError;
 
+	/* A free list reconstruction that failed to write the list leaves none */
+	if (psPageList == NULL)
+	{
+		return PVRSRV_OK;
+	}
+
 	eError = PMRUnlockSysPhysAddresses(psPageList->psReferencePMR);
 	PVR_ASSERT(eError == PVRSRV_OK);
 	OSFreeMem(psPageList);
