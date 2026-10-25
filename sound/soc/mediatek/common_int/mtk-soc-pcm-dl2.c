@@ -46,29 +46,6 @@
 #include "mtk-soc-pcm-platform.h"
 #include <linux/ftrace.h>
 
-static int dl2_runtime_sanity(struct snd_pcm_substream *substream)
-{
-    struct snd_pcm_runtime *runtime;
-
-    if (!substream)
-        return -EINVAL;
-
-    runtime = substream->runtime;
-    if (!runtime)
-        return -EINVAL;
-
-    if (!runtime->rate)
-        runtime->rate = 44100;
-
-    if (!runtime->channels)
-        runtime->channels = 2;
-
-    if (!runtime->dma_area)
-        return -ENOMEM;
-
-    return 0;
-}
-
 static int fast_dl_hdoutput;
 static struct afe_mem_control_t *pMemControl;
 static struct snd_dma_buffer *Dl2_Playback_dma_buf;
@@ -213,9 +190,6 @@ static int mtk_pcm_dl2_stop(struct snd_pcm_substream *substream)
 static snd_pcm_uframes_t
 mtk_pcm_dl2_pointer(struct snd_pcm_substream *substream)
 {
-	if (!pMemControl)
-		return 0;
-	
 	kal_int32 HW_memory_index = 0;
 	kal_int32 HW_Cur_ReadIdx = 0;
 	kal_uint32 Frameidx = 0;
@@ -288,12 +262,8 @@ mtk_pcm_dl2_pointer(struct snd_pcm_substream *substream)
 static int mtk_pcm_dl2_params(struct snd_pcm_substream *substream,
 			      struct snd_pcm_hw_params *hw_params)
 {
-
-	int ret = dl2_runtime_sanity(substream);
-    if (ret)
-		return ret;
-	
 	/* struct snd_dma_buffer *dma_buf = &substream->dma_buffer; */
+	int ret = 0;
 
 	/* runtime->dma_bytes has to be set manually to allow mmap */
 	substream->runtime->dma_bytes = params_buffer_bytes(hw_params);
@@ -420,10 +390,6 @@ static int mtk_soc_pcm_dl2_close(struct snd_pcm_substream *substream)
 
 static int mtk_pcm_dl2_prepare(struct snd_pcm_substream *substream)
 {
-	int ret = dl2_runtime_sanity(substream);
-	if (ret)
-		return ret;
-	
 	bool mI2SWLen = Soc_Aud_I2S_WLEN_WLEN_16BITS;
 	struct snd_pcm_runtime *runtime = substream->runtime;
 	unsigned int u32AudioI2S = 0;
@@ -522,10 +488,6 @@ static int mtk_pcm_dl2_prepare(struct snd_pcm_substream *substream)
 
 static int mtk_pcm_dl2_start(struct snd_pcm_substream *substream)
 {
-	int ret = dl2_runtime_sanity(substream);
-	if (ret)
-		return ret;
-	
 	struct snd_pcm_runtime *runtime = substream->runtime;
 
 	pr_debug("%s\n", __func__);
