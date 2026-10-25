@@ -124,7 +124,7 @@ static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
 	struct sg_table *psTable;
 	struct scatterlist *psSg;
 	PVRSRV_ERROR eError;
-	IMG_BOOL bValid;
+	IMG_BOOL *pbValid;
 	IMG_UINT32 i;
 	int iMapped;
 	int iErr;
@@ -136,10 +136,12 @@ static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
 	}
 
 	psCpuPAddr = kvmalloc_array(ui32NumPages, sizeof(*psCpuPAddr), GFP_KERNEL);
-	if (!psCpuPAddr)
+	/* one per page, even when the PMR has no holes */
+	pbValid = kvmalloc_array(ui32NumPages, sizeof(*pbValid), GFP_KERNEL);
+	if (!psCpuPAddr || !pbValid)
 	{
 		iErr = -ENOMEM;
-		goto err_free_table;
+		goto err_free_addrs;
 	}
 
 	/* The pages stay where they are until the attachment is unmapped */
@@ -151,8 +153,8 @@ static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
 	}
 
 	eError = PMR_CpuPhysAddr(psPMR, PAGE_SHIFT, ui32NumPages, 0,
-	                         psCpuPAddr, &bValid);
-	if (eError != PVRSRV_OK || !bValid)
+	                         psCpuPAddr, pbValid);
+	if (eError != PVRSRV_OK)
 	{
 		iErr = -EINVAL;
 		goto err_unlock;
@@ -169,7 +171,7 @@ static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
 		unsigned long ulPfn = PHYS_PFN(psCpuPAddr[i].uiAddr);
 
 		/* Only memory the kernel has pages for can be handed out */
-		if (!pfn_valid(ulPfn))
+		if (!pbValid[i] || !pfn_valid(ulPfn))
 		{
 			iErr = -EINVAL;
 			goto err_free_sg;
@@ -187,6 +189,7 @@ static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
 	}
 	psTable->nents = iMapped;
 
+	kvfree(pbValid);
 	kvfree(psCpuPAddr);
 
 	return psTable;
@@ -196,6 +199,7 @@ err_free_sg:
 err_unlock:
 	PMRUnlockSysPhysAddresses(psPMR);
 err_free_addrs:
+	kvfree(pbValid);
 	kvfree(psCpuPAddr);
 err_free_table:
 	kfree(psTable);
