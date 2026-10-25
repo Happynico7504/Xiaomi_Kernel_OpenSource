@@ -260,6 +260,41 @@ static void fakekms_convert_line(struct fakekms *fk, u8 *dst, const u8 *src,
 	if (var->transp.length)
 		alpha = GENMASK(var->transp.length - 1, 0) << var->transp.offset;
 
+	/*
+	 * Compositors draw XRGB8888 and the panels have 32 bit layouts with
+	 * 8 bit channels, so that has to be fast: this runs for every pixel
+	 * of every frame.
+	 */
+	if (format == DRM_FORMAT_XRGB8888 && bpp == 32 &&
+	    var->red.length == 8 && var->green.length == 8 &&
+	    var->blue.length == 8) {
+		const u32 *s = (const u32 *)src;
+		u32 *d = (u32 *)dst;
+
+		if (fk->native_format == DRM_FORMAT_XBGR8888) {
+			/* only red and blue swap places */
+			for (x = 0; x < width; x++) {
+				u32 p = s[x];
+
+				d[x] = (p & 0x0000ff00) | ((p >> 16) & 0xff) |
+				       ((p & 0xff) << 16) | alpha;
+			}
+		} else {
+			const unsigned int ro = var->red.offset;
+			const unsigned int go = var->green.offset;
+			const unsigned int bo = var->blue.offset;
+
+			for (x = 0; x < width; x++) {
+				u32 p = s[x];
+
+				d[x] = (((p >> 16) & 0xff) << ro) |
+				       (((p >> 8) & 0xff) << go) |
+				       ((p & 0xff) << bo) | alpha;
+			}
+		}
+		return;
+	}
+
 	for (x = 0; x < width; x++) {
 		u8 r, g, b;
 		u32 px;
