@@ -1,0 +1,5 @@
+# fakekms draws into fb0 and registers its DRM card below fb0's device.
+# Plymouth only leaves an fbdev alone when a DRM card it drives also has the
+# fbdev's ID_PATH, so give fb0 the card's; otherwise it draws on both.
+# Install to /etc/udev/rules.d/ (the fakekms-fbdev initramfs hook copies it).
+SUBSYSTEM=="graphics", KERNEL=="fb0", ENV{ID_PATH}="platform-fakekms"

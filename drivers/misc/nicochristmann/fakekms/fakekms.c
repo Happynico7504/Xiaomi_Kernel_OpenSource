@@ -707,14 +707,18 @@ static void fakekms_add_format(struct fakekms *fk, u32 format)
 	fk->formats[fk->num_formats++] = format;
 }
 
-static const struct platform_device_info fakekms_pdev_info = {
-	.name = DRIVER_NAME,
-	.id = PLATFORM_DEVID_NONE,
-	.dma_mask = DMA_BIT_MASK(64),
-};
-
 static int fakekms_attach(struct fb_info *info)
 {
+	/*
+	 * Sit below the fbdev's device: plymouth only skips an fbdev when a DRM
+	 * card it drives shares the fbdev's parent, and draws on both otherwise.
+	 */
+	struct platform_device_info pdev_info = {
+		.parent = info->device,
+		.name = DRIVER_NAME,
+		.id = PLATFORM_DEVID_NONE,
+		.dma_mask = DMA_BIT_MASK(64),
+	};
 	struct drm_mode_config *config;
 	struct platform_device *pdev;
 	struct drm_device *drm;
@@ -726,7 +730,7 @@ static int fakekms_attach(struct fb_info *info)
 		return -EINVAL;
 	}
 
-	pdev = platform_device_register_full(&fakekms_pdev_info);
+	pdev = platform_device_register_full(&pdev_info);
 	if (IS_ERR(pdev))
 		return PTR_ERR(pdev);
 
