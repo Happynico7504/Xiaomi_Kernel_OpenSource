@@ -201,7 +201,6 @@ err_unlock:
 err_free_addrs:
 	kvfree(pbValid);
 	kvfree(psCpuPAddr);
-err_free_table:
 	kfree(psTable);
 
 	return ERR_PTR(iErr);
