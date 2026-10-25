@@ -56,6 +56,8 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 #include <linux/err.h>
 #include <linux/slab.h>
 #include <linux/dma-buf.h>
+#include <linux/dma-mapping.h>
+#include <linux/mm.h>
 #include <linux/scatterlist.h>
 
 #include "img_types.h"
@@ -89,9 +91,9 @@ CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 /*
  * dma_buf_ops
  *
- * These are all returning errors if used.
- * The point is to prevent anyone outside of our driver from importing
- * and using our dmabuf.
+ * Other drivers may attach and map our dmabufs, so that a display driver
+ * can scan out what the GPU rendered. Mapping one into the kernel or into
+ * user space through the dmabuf still fails.
  */
 
 static int PVRDmaBufOpsAttach(struct dma_buf *psDmaBuf,
@@ -101,20 +103,118 @@ static int PVRDmaBufOpsAttach(struct dma_buf *psDmaBuf,
 #endif
 							  struct dma_buf_attachment *psAttachment)
 {
-	return -ENOSYS;
+	PMR *psPMR = (PMR *) psDmaBuf->priv;
+
+	/* Pages of a sparse PMR may be missing */
+	if (PMR_IsSparse(psPMR))
+	{
+		return -EINVAL;
+	}
+
+	return 0;
 }
 
 static struct sg_table *PVRDmaBufOpsMap(struct dma_buf_attachment *psAttachment,
                                         enum dma_data_direction eDirection)
 {
-	/* Attach hasn't been called yet */
-	return ERR_PTR(-EINVAL);
+	struct dma_buf *psDmaBuf = psAttachment->dmabuf;
+	PMR *psPMR = (PMR *) psDmaBuf->priv;
+	IMG_UINT32 ui32NumPages = psDmaBuf->size >> PAGE_SHIFT;
+	IMG_CPU_PHYADDR *psCpuPAddr;
+	struct sg_table *psTable;
+	struct scatterlist *psSg;
+	PVRSRV_ERROR eError;
+	IMG_BOOL bValid;
+	IMG_UINT32 i;
+	int iMapped;
+	int iErr;
+
+	psTable = kzalloc(sizeof(*psTable), GFP_KERNEL);
+	if (!psTable)
+	{
+		return ERR_PTR(-ENOMEM);
+	}
+
+	psCpuPAddr = kvmalloc_array(ui32NumPages, sizeof(*psCpuPAddr), GFP_KERNEL);
+	if (!psCpuPAddr)
+	{
+		iErr = -ENOMEM;
+		goto err_free_table;
+	}
+
+	/* The pages stay where they are until the attachment is unmapped */
+	eError = PMRLockSysPhysAddresses(psPMR);
+	if (eError != PVRSRV_OK)
+	{
+		iErr = -ENOMEM;
+		goto err_free_addrs;
+	}
+
+	eError = PMR_CpuPhysAddr(psPMR, PAGE_SHIFT, ui32NumPages, 0,
+	                         psCpuPAddr, &bValid);
+	if (eError != PVRSRV_OK || !bValid)
+	{
+		iErr = -EINVAL;
+		goto err_unlock;
+	}
+
+	iErr = sg_alloc_table(psTable, ui32NumPages, GFP_KERNEL);
+	if (iErr)
+	{
+		goto err_unlock;
+	}
+
+	for_each_sg(psTable->sgl, psSg, psTable->orig_nents, i)
+	{
+		unsigned long ulPfn = PHYS_PFN(psCpuPAddr[i].uiAddr);
+
+		/* Only memory the kernel has pages for can be handed out */
+		if (!pfn_valid(ulPfn))
+		{
+			iErr = -EINVAL;
+			goto err_free_sg;
+		}
+
+		sg_set_page(psSg, pfn_to_page(ulPfn), PAGE_SIZE, 0);
+	}
+
+	iMapped = dma_map_sg(psAttachment->dev, psTable->sgl,
+	                     psTable->orig_nents, eDirection);
+	if (!iMapped)
+	{
+		iErr = -ENOMEM;
+		goto err_free_sg;
+	}
+	psTable->nents = iMapped;
+
+	kvfree(psCpuPAddr);
+
+	return psTable;
+
+err_free_sg:
+	sg_free_table(psTable);
+err_unlock:
+	PMRUnlockSysPhysAddresses(psPMR);
+err_free_addrs:
+	kvfree(psCpuPAddr);
+err_free_table:
+	kfree(psTable);
+
+	return ERR_PTR(iErr);
 }
 
 static void PVRDmaBufOpsUnmap(struct dma_buf_attachment *psAttachment,
                               struct sg_table *psTable,
                               enum dma_data_direction eDirection)
 {
+	PMR *psPMR = (PMR *) psAttachment->dmabuf->priv;
+
+	dma_unmap_sg(psAttachment->dev, psTable->sgl, psTable->orig_nents,
+	             eDirection);
+	sg_free_table(psTable);
+	kfree(psTable);
+
+	PMRUnlockSysPhysAddresses(psPMR);
 }
 
 static void PVRDmaBufOpsRelease(struct dma_buf *psDmaBuf)

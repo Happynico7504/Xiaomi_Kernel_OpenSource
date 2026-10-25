@@ -443,6 +443,10 @@ static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *sta
 
 	cpp = fb->format->cpp[0];
 	bo = to_fakekms_bo(drm_gem_fb_get_obj(fb, 0));
+	/* A GPU wrote an imported buffer behind the CPU caches */
+	if (bo->sgt)
+		dma_sync_sg_for_cpu(fk->drm->dev, bo->sgt->sgl,
+				    bo->sgt->orig_nents, DMA_BIDIRECTIONAL);
 	src = bo->vaddr + fb->offsets[0] + (state->src_y >> 16) * fb->pitches[0] +
 	      (state->src_x >> 16) * cpp;
 	dst = info->screen_base;
