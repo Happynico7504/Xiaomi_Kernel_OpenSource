@@ -773,11 +773,17 @@ exit:
 
 void mtk_dl2_copy_l(void)
 {
-	struct afe_block_t Afe_Block = pMemControl->rBlock;
+	struct afe_block_t Afe_Block;
 	unsigned long count = ISRCopyBuffer.u4BufferSize;
 
-	if (unlikely(!ISRCopyBuffer.u4BufferSize || !ISRCopyBuffer.pBufferIndx))
+	/* The DL2 interrupt also comes when another PCM drives the DL2 memif
+	 * and this one was never opened, leaving pMemControl NULL.
+	 */
+	if (unlikely(!pMemControl || !ISRCopyBuffer.u4BufferSize ||
+		     !ISRCopyBuffer.pBufferIndx))
 		return;
+
+	Afe_Block = pMemControl->rBlock;
 
 	/* for debug */
 	detectData((char *)ISRCopyBuffer.pBufferIndx, count);
