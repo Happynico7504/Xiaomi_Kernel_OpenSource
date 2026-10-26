@@ -374,7 +374,6 @@ static int mtk_pcm_fmtx_silence(struct snd_pcm_substream *substream,
 	return 0; /* do nothing */
 }
 
-static void *dummy_page[2];
 
 static struct page *mtk_pcm_fmtx_page(struct snd_pcm_substream *substream,
 				      unsigned long offset)
@@ -382,7 +381,11 @@ static struct page *mtk_pcm_fmtx_page(struct snd_pcm_substream *substream,
 #if defined(FMTX_DEBUG_LOG)
 	pr_debug("%s\n", __func__);
 #endif
-	return virt_to_page(dummy_page[substream->stream]); /* the same page */
+	/* dummy_page is never allocated, and virt_to_page(NULL) is no page:
+	 * mapping it let mmap writes land anywhere in memory. Without a page
+	 * the mmap access gets SIGBUS instead.
+	 */
+	return NULL;
 }
 
 static struct snd_pcm_ops mtk_fmtx_ops = {

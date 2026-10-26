@@ -900,12 +900,15 @@ static int mtk_routing_pcm_silence(struct snd_pcm_substream *substream,
 	return 0; /* do nothing */
 }
 
-static void *dummy_page[2];
 
 static struct page *mtk_routing_pcm_page(struct snd_pcm_substream *substream,
 					 unsigned long offset)
 {
-	return virt_to_page(dummy_page[substream->stream]); /* the same page */
+	/* dummy_page is never allocated, and virt_to_page(NULL) is no page:
+	 * mapping it let mmap writes land anywhere in memory. Without a page
+	 * the mmap access gets SIGBUS instead.
+	 */
+	return NULL;
 }
 
 static int mtk_routing_pcm_prepare(struct snd_pcm_substream *substream)

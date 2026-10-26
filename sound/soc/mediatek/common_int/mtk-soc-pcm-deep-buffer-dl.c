@@ -472,12 +472,15 @@ static int mtk_deep_buffer_dl_trigger(struct snd_pcm_substream *substream,
 	return -EINVAL;
 }
 
-static void *dummy_page[2];
 static struct page *mtk_deep_buffer_dl_page(struct snd_pcm_substream *substream,
 					    unsigned long offset)
 {
 	pr_debug("%s\n", __func__);
-	return virt_to_page(dummy_page[substream->stream]); /* the same page */
+	/* dummy_page is never allocated, and virt_to_page(NULL) is no page:
+	 * mapping it let mmap writes land anywhere in memory. Without a page
+	 * the mmap access gets SIGBUS instead.
+	 */
+	return NULL;
 }
 
 static int mtk_deep_buffer_dl_ack(struct snd_pcm_substream *substream)
