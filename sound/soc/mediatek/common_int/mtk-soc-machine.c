@@ -396,14 +396,11 @@ static struct snd_soc_dai_link mt_soc_dai_common[] = {
 		.codec_dai_name = MT_SOC_CODEC_I2S0TXDAI_NAME,
 		.codec_name = MT_SOC_CODEC_NAME,
 	},
-	{
-		.name = "DEEP_BUFFER_DL_OUTPUT",
-		.stream_name = MT_SOC_DEEP_BUFFER_DL_STREAM_NAME,
-		.cpu_dai_name = "snd-soc-dummy-dai",
-		.platform_name = MT_SOC_DEEP_BUFFER_DL_PCM,
-		.codec_dai_name = MT_SOC_CODEC_DEEPBUFFER_TX_DAI_NAME,
-		.codec_name = MT_SOC_CODEC_NAME,
-	},
+	/* No DEEP_BUFFER_DL_OUTPUT and no MultiMedia_DL2: hw_params on either
+	 * oopses the kernel in mtk_pcm_dl2_params (set_mem_block's memset_io
+	 * runs off the DL2 buffer), and PipeWire configures every PCM of a card
+	 * while probing it. Playback goes through MultiMedia1 (DL1).
+	 */
 	{
 		.name = "DL1AWBCAPTURE",
 		.stream_name = MT_SOC_DL1_AWB_RECORD_STREAM_NAME,
@@ -515,14 +512,6 @@ static struct snd_soc_dai_link mt_soc_dai_common[] = {
 		.platform_name = MT_SOC_FM_I2S_AWB_PCM,
 		.codec_dai_name = MT_SOC_CODEC_FM_I2S_DUMMY_DAI_NAME,
 		.codec_name = MT_SOC_CODEC_DUMMY_NAME,
-	},
-	{
-		.name = "MultiMedia_DL2",
-		.stream_name = MT_SOC_DL2_STREAM_NAME,
-		.cpu_dai_name = MT_SOC_DL2DAI_NAME,
-		.platform_name = MT_SOC_DL2_PCM,
-		.codec_dai_name = MT_SOC_CODEC_TXDAI2_NAME,
-		.codec_name = MT_SOC_CODEC_NAME,
 	},
 	{
 		.name = "MultiMedia_DL3",
