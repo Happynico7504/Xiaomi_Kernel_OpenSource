@@ -677,6 +677,18 @@ static int Audio_DL2_DataTransfer(struct snd_kcontrol *kcontrol,
 	mtk_dl2_copy2buffer(addr, size);
 	return 0;
 }
+
+/* The control only takes data, but alsa-lib reads every control when it
+ * loads a mixer and gives up on the whole card if one read fails, which
+ * it does with -EPERM for a control without a get handler.
+ */
+static int Audio_DL2_DataTransfer_Get(struct snd_kcontrol *kcontrol,
+				      struct snd_ctl_elem_value *ucontrol)
+{
+	ucontrol->value.integer.value[0] = 0;
+	ucontrol->value.integer.value[1] = 0;
+	return 0;
+}
 #endif
 
 static int Audio_LowLatencyDebug_Get(struct snd_kcontrol *kcontrol,
@@ -770,7 +782,7 @@ static const struct snd_kcontrol_new Audio_snd_routing_controls[] = {
 		     AudioI2S1_Setting_Get, AudioI2S1_Setting_Set),
 #ifdef AUDIO_DL2_ISR_COPY_SUPPORT
 	SOC_DOUBLE_EXT("Audio_DL2_DataTransfer", SND_SOC_NOPM, 0, 1, 65536, 0,
-		       NULL, Audio_DL2_DataTransfer),
+		       Audio_DL2_DataTransfer_Get, Audio_DL2_DataTransfer),
 #endif
 	SOC_SINGLE_EXT("Audio_LowLatency_Debug", SND_SOC_NOPM, 0, 0x20000, 0,
 		       Audio_LowLatencyDebug_Get, Audio_LowLatencyDebug_Set),
