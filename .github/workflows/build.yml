@@ -5,21 +5,36 @@ on:
 jobs:
   build:
     runs-on: "ubuntu-24.04"
+    # a hanging download shouldn't hold the runner for GitHub's default 6 hours
+    timeout-minutes: 60
+    env:
+      # wget gives up on a stalled connection after a minute instead of 15,
+      # and says in one line what it fetched
+      WGET: "wget -nv --timeout=60 --tries=5"
     steps:
-    
+
     - uses: "actions/checkout@v2"
     - run: echo "SHORT_SHA=`echo ${GITHUB_SHA} | cut -c1-7`" >> $GITHUB_ENV
-    - run: |
-        sudo wget https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz 2> /dev/null || true
+    - name: "Fetch the ccache and the out of tree modules"
+      run: |
+        sudo $WGET https://github.com/Happynico7504/Xiaomi_Kernel_OpenSource/releases/download/autobuild/ccache.tar.gz || true
         sudo tar -xf ccache.tar.gz || true
-        sudo wget https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip 2> /dev/null || true
-        sudo unzip ice-s-oss.zip 2> /dev/null || true
+        sudo $WGET https://github.com/Happynico7504/MTK_kernel_modules/archive/refs/heads/ice-s-oss.zip || true
+        sudo unzip -q ice-s-oss.zip 2> /dev/null || true
         sudo cp -r MTK_kernel_modules-ice-s-oss/* drivers/misc/nicochristmann/mtkmods || true
-        sudo wget https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip 2> /dev/null || true
-        sudo unzip main.zip 2> /dev/null || true
+        sudo $WGET https://github.com/Happynico7504/88x2bu-20210702/archive/refs/heads/main.zip || true
+        sudo unzip -q main.zip 2> /dev/null || true
         sudo mkdir drivers/misc/nicochristmann/usbwifi/src || true
         sudo cp -r 88x2bu-20210702-main/* drivers/misc/nicochristmann/usbwifi/src || true
-        sudo wget https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz 2> /dev/null && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x && sudo apt-get update > /dev/null && sudo apt-get install -y binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip ccache > /dev/null
+    - name: "Fetch clang 11"
+      run: |
+        sudo $WGET https://github.com/llvm/llvm-project/releases/download/llvmorg-11.0.1/clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz && sudo xzcat clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10.tar.xz | sudo tar -x
+    - name: "Install the build dependencies"
+      run: |
+        sudo apt-get update -qq -o Acquire::http::Timeout=60
+        sudo apt-get install -y -qq -o Acquire::http::Timeout=60 binutils gcc-arm-linux-gnueabi gcc-aarch64-linux-gnu build-essential git flex bison libssl-dev bc libgmp-dev libmpc-dev jq wget curl unzip ccache > /dev/null
+    - name: "Set up the compiler wrappers and the build directory"
+      run: |
         sudo mv clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang-real
         sudo mv clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++ clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin/clang++-real
         sudo cp custom-scripts/clang clang+llvm-11.0.1-x86_64-linux-gnu-ubuntu-20.10/bin
