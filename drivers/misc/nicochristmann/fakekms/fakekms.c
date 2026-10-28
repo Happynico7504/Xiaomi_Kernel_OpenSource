@@ -58,6 +58,19 @@ struct fakekms {
 	u8 *linebuf;
 	struct backlight_device *backlight;
 
+	/*
+	 * The newest frame waiting for flush_work, which copies it into the
+	 * fbdev and pans. mtkfb's pan blocks for about a frame, so commits
+	 * only queue here and return; a frame replaced before it was copied
+	 * is dropped. Protected by pending_lock.
+	 */
+	struct workqueue_struct *wq;
+	struct work_struct flush_work;
+	spinlock_t pending_lock;
+	struct drm_framebuffer *pending_fb;
+	unsigned int pending_x, pending_y;
+	struct drm_pending_vblank_event *pending_event;
+
 	unsigned int width, height;
 	u32 native_format;	/* 0 if the fbdev layout has no DRM fourcc */
 	u32 formats[3];
@@ -463,10 +476,14 @@ static void fakekms_backlight_init(struct fakekms *fk)
 	backlight_update_status(bd);
 }
 
-/* caller holds fakekms_lock() */
-static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *state)
+/*
+ * Copy the frame at (x, y) of fb into the fbdev. Returns whether it did, i.e.
+ * whether there is something to pan.
+ * caller holds fakekms_lock()
+ */
+static bool fakekms_copy_locked(struct fakekms *fk, struct drm_framebuffer *fb,
+				unsigned int x, unsigned int y0)
 {
-	struct drm_framebuffer *fb = state->fb;
 	struct fb_info *info = fk->info;
 	unsigned int cpp, dst_len, y;
 	struct fakekms_bo *bo;
@@ -474,7 +491,7 @@ static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *sta
 	const u8 *src;
 
 	if (!fk->enabled || !info || !fb)
-		return;
+		return false;
 
 	cpp = fb->format->cpp[0];
 	bo = to_fakekms_bo(drm_gem_fb_get_obj(fb, 0));
@@ -482,8 +499,7 @@ static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *sta
 	if (bo->sgt)
 		dma_sync_sg_for_cpu(fk->drm->dev, bo->sgt->sgl,
 				    bo->sgt->orig_nents, DMA_BIDIRECTIONAL);
-	src = bo->vaddr + fb->offsets[0] + (state->src_y >> 16) * fb->pitches[0] +
-	      (state->src_x >> 16) * cpp;
+	src = bo->vaddr + fb->offsets[0] + y0 * fb->pitches[0] + x * cpp;
 	dst = info->screen_base;
 	dst_len = fk->width * info->var.bits_per_pixel / 8;
 
@@ -499,14 +515,100 @@ static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *sta
 		dst += info->fix.line_length;
 	}
 
-	fakekms_pan(info);
+	return true;
 }
 
-static void fakekms_flush(struct fakekms *fk, struct drm_plane_state *state)
+/* copy and pan right away; caller holds fakekms_lock() */
+static void fakekms_flush_locked(struct fakekms *fk, struct drm_plane_state *state)
 {
-	fakekms_lock(fk);
-	fakekms_flush_locked(fk, state);
-	fakekms_unlock(fk);
+	if (fakekms_copy_locked(fk, state->fb, state->src_x >> 16,
+				state->src_y >> 16))
+		fakekms_pan(fk->info);
+}
+
+static void fakekms_send_event(struct fakekms *fk,
+			       struct drm_pending_vblank_event *event)
+{
+	unsigned long flags;
+
+	if (!event)
+		return;
+	spin_lock_irqsave(&fk->drm->event_lock, flags);
+	drm_crtc_send_vblank_event(&fk->pipe.crtc, event);
+	spin_unlock_irqrestore(&fk->drm->event_lock, flags);
+}
+
+/*
+ * Hand a frame to flush_work. The event goes out once the frame is copied,
+ * so a client doesn't draw into a buffer that is still being read.
+ */
+static void fakekms_queue(struct fakekms *fk, struct drm_framebuffer *fb,
+			  unsigned int x, unsigned int y,
+			  struct drm_pending_vblank_event *event)
+{
+	struct drm_pending_vblank_event *old_event;
+	struct drm_framebuffer *old_fb;
+
+	drm_framebuffer_get(fb);
+
+	spin_lock(&fk->pending_lock);
+	old_fb = fk->pending_fb;
+	old_event = fk->pending_event;
+	fk->pending_fb = fb;
+	fk->pending_x = x;
+	fk->pending_y = y;
+	fk->pending_event = event;
+	spin_unlock(&fk->pending_lock);
+
+	/* replaced before it reached the panel: dropped */
+	if (old_fb)
+		drm_framebuffer_put(old_fb);
+	fakekms_send_event(fk, old_event);
+
+	queue_work(fk->wq, &fk->flush_work);
+}
+
+/*
+ * Copy the newest frame into the fbdev, release it to the client, then pan.
+ * The pan holds console_lock for about a frame, but commits don't take it,
+ * so the next frame is queued meanwhile instead of the client waiting.
+ */
+static void fakekms_flush_work_fn(struct work_struct *work)
+{
+	struct fakekms *fk = container_of(work, struct fakekms, flush_work);
+
+	for (;;) {
+		struct drm_pending_vblank_event *event;
+		struct drm_framebuffer *fb;
+		struct fb_info *info;
+		unsigned int x, y;
+		bool copied;
+
+		spin_lock(&fk->pending_lock);
+		fb = fk->pending_fb;
+		x = fk->pending_x;
+		y = fk->pending_y;
+		event = fk->pending_event;
+		fk->pending_fb = NULL;
+		fk->pending_event = NULL;
+		spin_unlock(&fk->pending_lock);
+
+		if (!fb)
+			break;
+
+		fakekms_lock(fk);
+		copied = fakekms_copy_locked(fk, fb, x, y);
+		info = fk->info;
+		mutex_unlock(&fk->lock);
+
+		fakekms_send_event(fk, event);
+		drm_framebuffer_put(fb);
+
+		/* fb unregistration needs console_lock, so info stays valid */
+		if (copied)
+			fakekms_pan(info);
+		console_unlock();
+	}
 }
 
 /* ---- framebuffers ---- */
@@ -520,7 +622,8 @@ static int fakekms_fb_dirty(struct drm_framebuffer *fb, struct drm_file *file,
 
 	drm_modeset_lock(&plane->mutex, NULL);
 	if (plane->state->fb == fb)
-		fakekms_flush(fk, plane->state);
+		fakekms_queue(fk, fb, plane->state->src_x >> 16,
+			      plane->state->src_y >> 16, NULL);
 	drm_modeset_unlock(&plane->mutex);
 
 	return 0;
@@ -614,17 +717,17 @@ static void fakekms_pipe_update(struct drm_simple_display_pipe *pipe,
 				struct drm_plane_state *old_state)
 {
 	struct fakekms *fk = pipe->crtc.dev->dev_private;
+	struct drm_plane_state *state = pipe->plane.state;
 	struct drm_crtc *crtc = &pipe->crtc;
+	struct drm_pending_vblank_event *event = crtc->state->event;
 
-	fakekms_flush(fk, pipe->plane.state);
-
-	/* no vblank irq, complete the event right away */
-	if (crtc->state->event) {
-		spin_lock_irq(&crtc->dev->event_lock);
-		drm_crtc_send_vblank_event(crtc, crtc->state->event);
-		spin_unlock_irq(&crtc->dev->event_lock);
-		crtc->state->event = NULL;
-	}
+	/* no vblank irq: the event goes out once the frame was copied */
+	crtc->state->event = NULL;
+	if (state->fb)
+		fakekms_queue(fk, state->fb, state->src_x >> 16,
+			      state->src_y >> 16, event);
+	else
+		fakekms_send_event(fk, event);
 }
 
 static const struct drm_simple_display_pipe_funcs fakekms_pipe_funcs = {
@@ -794,12 +897,21 @@ static int fakekms_attach(struct fb_info *info)
 	fk->height = info->var.yres;
 	fk->native_format = fakekms_native_format(&info->var);
 	mutex_init(&fk->lock);
+	spin_lock_init(&fk->pending_lock);
+	INIT_WORK(&fk->flush_work, fakekms_flush_work_fn);
 	drm->dev_private = fk;
 
 	fk->linebuf = kmalloc_array(fk->width, 4, GFP_KERNEL);
 	if (!fk->linebuf) {
 		ret = -ENOMEM;
 		goto err_fk;
+	}
+
+	/* ordered: one flush at a time, frames in order */
+	fk->wq = alloc_ordered_workqueue(DRIVER_NAME, WQ_HIGHPRI);
+	if (!fk->wq) {
+		ret = -ENOMEM;
+		goto err_linebuf;
 	}
 
 	if (fk->native_format)
@@ -844,6 +956,8 @@ static int fakekms_attach(struct fb_info *info)
 
 err_config:
 	drm_mode_config_cleanup(drm);
+	destroy_workqueue(fk->wq);
+err_linebuf:
 	kfree(fk->linebuf);
 err_fk:
 	kfree(fk);
@@ -864,6 +978,8 @@ static void fakekms_detach(void)
 	backlight_device_unregister(fk->backlight);
 	drm_dev_unregister(fk->drm);
 	drm_atomic_helper_shutdown(fk->drm);
+	/* runs the last queued frame, which drops its framebuffer reference */
+	destroy_workqueue(fk->wq);
 	drm_mode_config_cleanup(fk->drm);
 	drm_dev_put(fk->drm);
 	platform_device_unregister(fk->pdev);
