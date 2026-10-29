@@ -24,6 +24,7 @@
 #include <linux/mutex.h>
 #include <linux/platform_device.h>
 #include <linux/slab.h>
+#include <linux/suspend.h>
 #include <linux/vmalloc.h>
 #include <linux/workqueue.h>
 
@@ -49,14 +50,16 @@ struct fakekms {
 	struct drm_connector connector;
 
 	/*
-	 * Protects info, enabled and linebuf. Always taken inside console_lock,
-	 * since fbmem calls our notifier with console_lock held.
+	 * Protects info, enabled, sleeping and linebuf. Always taken inside
+	 * console_lock, since fbmem calls our notifier with console_lock held.
 	 */
 	struct mutex lock;
 	struct fb_info *info;
 	bool enabled;
+	bool sleeping;	/* the panel is down for a system suspend */
 	u8 *linebuf;
 	struct backlight_device *backlight;
+	struct notifier_block pm_nb;
 
 	/*
 	 * The newest frame waiting for flush_work, which copies it into the
@@ -490,7 +493,7 @@ static bool fakekms_copy_locked(struct fakekms *fk, struct drm_framebuffer *fb,
 	char __iomem *dst;
 	const u8 *src;
 
-	if (!fk->enabled || !info || !fb)
+	if (!fk->enabled || fk->sleeping || !info || !fb)
 		return false;
 
 	cpp = fb->format->cpp[0];
@@ -711,6 +714,47 @@ static void fakekms_pipe_disable(struct drm_simple_display_pipe *pipe)
 	if (fk->info)
 		fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
 	fakekms_unlock(fk);
+}
+
+/*
+ * mtkfb doesn't come back from a system suspend that it went into with the
+ * panel on: Android always turns the screen off first, and so does GNOME's
+ * own suspend, but "systemctl suspend" from a terminal doesn't, and resume
+ * then hangs. So the panel is powered down before every suspend, frames are
+ * neither copied nor panned while the system sleeps, and afterwards the
+ * panel comes back as on a mode set.
+ */
+static int fakekms_pm_notify(struct notifier_block *nb, unsigned long action,
+			     void *data)
+{
+	struct fakekms *fk = container_of(nb, struct fakekms, pm_nb);
+
+	switch (action) {
+	case PM_SUSPEND_PREPARE:
+	case PM_HIBERNATION_PREPARE:
+		/* waits for a copy or pan in progress, both need console_lock */
+		fakekms_lock(fk);
+		fk->sleeping = true;
+		if (fk->enabled && fk->info)
+			fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
+		fakekms_unlock(fk);
+		break;
+	case PM_POST_SUSPEND:
+	case PM_POST_HIBERNATION:
+	case PM_POST_RESTORE:
+		fakekms_lock(fk);
+		if (fk->sleeping && fk->enabled && fk->info) {
+			fakekms_unblank(fk->info);
+			/* fb0 still holds the last frame copied before sleeping */
+			fakekms_pan(fk->info);
+			fakekms_wake_backlight(fk);
+		}
+		fk->sleeping = false;
+		fakekms_unlock(fk);
+		break;
+	}
+
+	return NOTIFY_DONE;
 }
 
 static void fakekms_pipe_update(struct drm_simple_display_pipe *pipe,
@@ -955,6 +999,9 @@ static int fakekms_attach(struct fb_info *info)
 
 	fakekms_backlight_init(fk);
 
+	fk->pm_nb.notifier_call = fakekms_pm_notify;
+	register_pm_notifier(&fk->pm_nb);
+
 	fakekms_dev = fk;
 	DRM_INFO("fakekms: %ux%u on fb%d (%s)\n", fk->width, fk->height,
 		 info->node, info->fix.id);
@@ -981,6 +1028,7 @@ static void fakekms_detach(void)
 	if (!fk)
 		return;
 
+	unregister_pm_notifier(&fk->pm_nb);
 	backlight_device_unregister(fk->backlight);
 	drm_dev_unregister(fk->drm);
 	drm_atomic_helper_shutdown(fk->drm);
