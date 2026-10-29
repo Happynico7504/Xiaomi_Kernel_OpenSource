@@ -514,37 +514,13 @@ static int mtk_capture_pcm_trigger(struct snd_pcm_substream *substream, int cmd)
 	return -EINVAL;
 }
 
-/*
- * Copy count bytes from pos of the buffer the memif writes into, as ALSA
- * expects. mtk_memblk_copy() reads from its own index instead, at most what
- * the pointer callback has counted so far, and returns success with the rest
- * of the read left unfilled: once that index drifted from ALSA's position
- * (PipeWire reads by avail rather than in blocking periods) every read came
- * back as silence.
- */
 static int mtk_capture_pcm_copy(struct snd_pcm_substream *substream,
 				int channel, unsigned long pos,
 				void __user *dst, unsigned long count)
 {
-	struct snd_pcm_runtime *runtime = substream->runtime;
-	struct afe_block_t *blk = &VUL_Control_context->rBlock;
-
 	vcore_dvfs(&vcore_dvfs_enable, false);
-
-	if (!runtime->dma_area || pos + count > runtime->dma_bytes)
-		return -EINVAL;
-	if (copy_to_user(dst, runtime->dma_area + pos, count))
-		return -EFAULT;
-
-	/* keep the pointer callback's overflow accounting in step */
-	mem_blk_spinlock(cap_mem_blk);
-	blk->u4DataRemained = blk->u4DataRemained > count ?
-			      blk->u4DataRemained - count : 0;
-	if (blk->u4BufferSize)
-		blk->u4DMAReadIdx = (pos + count) % blk->u4BufferSize;
-	mem_blk_spinunlock(cap_mem_blk);
-
-	return 0;
+	return mtk_memblk_copy(substream, channel, pos, dst, count,
+			       VUL_Control_context, cap_mem_blk);
 }
 
 static int mtk_capture_pcm_silence(struct snd_pcm_substream *substream,
