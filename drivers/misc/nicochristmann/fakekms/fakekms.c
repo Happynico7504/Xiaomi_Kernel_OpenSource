@@ -907,8 +907,14 @@ static int fakekms_attach(struct fb_info *info)
 		goto err_fk;
 	}
 
-	/* ordered: one flush at a time, frames in order */
-	fk->wq = alloc_ordered_workqueue(DRIVER_NAME, WQ_HIGHPRI);
+	/*
+	 * ordered: one flush at a time, frames in order.
+	 * freezable: no pan may run while devices suspend. The pan holds
+	 * console_lock, which suspend_console() needs, and blocks on a display
+	 * going to sleep; a client that keeps committing until it is frozen
+	 * (systemd-sleep without logind telling mutter) deadlocked suspend.
+	 */
+	fk->wq = alloc_ordered_workqueue(DRIVER_NAME, WQ_HIGHPRI | WQ_FREEZABLE);
 	if (!fk->wq) {
 		ret = -ENOMEM;
 		goto err_linebuf;
