@@ -21,6 +21,8 @@
 #include <linux/sort.h>
 #include <linux/slab.h>
 #include <linux/kmemleak.h>
+#include <linux/pfn.h>
+#include <linux/suspend.h>
 
 #define MAX_RESERVED_REGIONS	64
 static struct reserved_mem reserved_mem[MAX_RESERVED_REGIONS];
@@ -424,3 +426,33 @@ struct reserved_mem *of_reserved_mem_lookup(struct device_node *np)
 	return NULL;
 }
 EXPORT_SYMBOL_GPL(of_reserved_mem_lookup);
+
+#ifdef CONFIG_HIBERNATION
+/*
+ * Firmware, the modem and the secure world own most reserved memory, and the
+ * platform may close it to the AP. Hibernation would save it with the
+ * kernel's memory and write it back on restore, into memory the boot that
+ * restores the image handed to its owners again. Leave it out of the image.
+ * Reusable regions (CMA) hold kernel data and have to be saved.
+ *
+ * Not from fdt_init_reserved_mem(): that runs before the linear map exists,
+ * and registering a region allocates.
+ */
+static int __init of_reserved_mem_nosave(void)
+{
+	int i;
+
+	for (i = 0; i < reserved_mem_count; i++) {
+		struct reserved_mem *rmem = &reserved_mem[i];
+
+		if (!rmem->size ||
+		    of_get_flat_dt_prop(rmem->fdt_node, "reusable", NULL))
+			continue;
+		register_nosave_region_late(PFN_DOWN(rmem->base),
+					    PFN_UP(rmem->base + rmem->size));
+	}
+
+	return 0;
+}
+core_initcall(of_reserved_mem_nosave);
+#endif
