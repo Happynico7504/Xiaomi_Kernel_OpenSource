@@ -429,11 +429,16 @@ EXPORT_SYMBOL_GPL(of_reserved_mem_lookup);
 
 #ifdef CONFIG_HIBERNATION
 /*
- * Firmware, the modem and the secure world own most reserved memory, and the
- * platform may close it to the AP. Hibernation would save it with the
- * kernel's memory and write it back on restore, into memory the boot that
- * restores the image handed to its owners again. Leave it out of the image.
- * Reusable regions (CMA) hold kernel data and have to be saved.
+ * Hibernation saves every mapped page, reserved ones included, and writes
+ * them back on restore. That includes the modem's private memory, which LK
+ * reserves as "mblock-<n>-md_mem_usage" (256 MB on MT6761) and the EMI MPU
+ * closes to the AP: by the time the image is restored, the boot that
+ * restores it has handed that memory to the modem again, and writing it
+ * back is a write violation. Leave it out of the image.
+ *
+ * Only that region: AP drivers keep live data in other reserved memory
+ * (CCCI's shared memory, the framebuffer, DMA pools), and a restore that
+ * left all of it out panicked.
  *
  * Not from fdt_init_reserved_mem(): that runs before the linear map exists,
  * and registering a region allocates.
@@ -445,8 +450,7 @@ static int __init of_reserved_mem_nosave(void)
 	for (i = 0; i < reserved_mem_count; i++) {
 		struct reserved_mem *rmem = &reserved_mem[i];
 
-		if (!rmem->size ||
-		    of_get_flat_dt_prop(rmem->fdt_node, "reusable", NULL))
+		if (!rmem->size || !strstr(rmem->name, "md_mem_usage"))
 			continue;
 		register_nosave_region_late(PFN_DOWN(rmem->base),
 					    PFN_UP(rmem->base + rmem->size));
