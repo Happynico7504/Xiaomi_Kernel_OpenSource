@@ -690,6 +690,21 @@ static void fakekms_wake_backlight(struct fakekms *fk)
 	backlight_update_status(bd);
 }
 
+/*
+ * Turn the backlight off, then power the panel down, as Android does. The
+ * level is a command to the panel, which the display driver refuses once
+ * the panel sleeps; and while the touch controller's proximity sensor is on,
+ * the panel driver keeps the panel powered through the blank, so it would
+ * stay lit at its last level.
+ * caller holds fakekms_lock()
+ */
+static void fakekms_power_down(struct fakekms *fk)
+{
+	if (fk->backlight)
+		led_set_brightness(bl_get_data(fk->backlight), 0);
+	fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
+}
+
 static void fakekms_pipe_enable(struct drm_simple_display_pipe *pipe,
 				struct drm_crtc_state *crtc_state,
 				struct drm_plane_state *plane_state)
@@ -712,7 +727,7 @@ static void fakekms_pipe_disable(struct drm_simple_display_pipe *pipe)
 	fakekms_lock(fk);
 	fk->enabled = false;
 	if (fk->info)
-		fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
+		fakekms_power_down(fk);
 	fakekms_unlock(fk);
 }
 
@@ -736,7 +751,7 @@ static int fakekms_pm_notify(struct notifier_block *nb, unsigned long action,
 		fakekms_lock(fk);
 		fk->sleeping = true;
 		if (fk->enabled && fk->info)
-			fakekms_blank(fk->info, FB_BLANK_POWERDOWN);
+			fakekms_power_down(fk);
 		fakekms_unlock(fk);
 		break;
 	case PM_POST_SUSPEND:
